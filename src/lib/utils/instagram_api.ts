@@ -1,134 +1,185 @@
-import type { UserPreview } from "$lib/models";
+import type { IgUserPreview, InstagramUserProfileResponse } from '$lib/instagram_models';
 
-const IG_APP_ID = "936619743392459";
-const HEADERS = { "x-ig-app-id": IG_APP_ID };
-const CREDENTIALS = "include";
+const QUERY_HASH_FOLLOWERS = 'c76146de99bb02f6415203be841dd25a';
+const QUERY_HASH_FOLLOWING = 'd04b0a864b4b54837c0d870b0e77e076';
+const QUERY_HASH_PROFILE = '7c16654f22c819fb63d1183034a5162f';
 
 /**
  * Get the numeric user ID by username.
  */
-export async function getUserId(username: string) {
-  const url = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${username}`;
-  try {
-    const response = await fetch(url, {
-      credentials: CREDENTIALS,
-      headers: HEADERS,
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const data = await response.json();
-    // Data shape: { data: { user: { id: string, ... } } }
-    const userId = parseInt(data?.data?.user?.id);
-    console.log("[getUserId]", { username, userId });
-    return userId;
-  } catch (error) {
-    console.error("Error in getUserId:", error);
-    throw error;
-  }
+export async function getUserId(username: string): Promise<number> {
+	const url = `https://www.instagram.com/web/search/topsearch/?query=${username}`;
+	try {
+		const response = await fetch(url);
+		if (!response.ok) {
+			throw new Error(`HTTP error! Status: ${response.status}`);
+		}
+		const data = await response.json();
+		const user = data.users.map((u: any) => u.user).filter((u: any) => u.username === username)[0];
+
+		if (!user) {
+			throw new Error('User not found');
+		}
+		return parseInt(user.pk);
+	} catch (error) {
+		console.error('Error in getUserId:', error);
+		throw error;
+	}
 }
 
 /**
- * Fetch all followers in batches of 25 per page.
+ * Fetch user profile information by user ID.
  */
-export async function getFollowers(userId: number): Promise<UserPreview[]> {
-  let allFollowers: UserPreview[] = [];
-  let nextMaxId: string | undefined = undefined;
+export async function fetchUserProfile(userId: number): Promise<any> {
+	const variables = {
+		id: userId,
+		render_surface: 'PROFILE'
+	};
 
-  while (true) {
-    // Build the URL with pagination parameters
-    const url = new URL(
-      `https://www.instagram.com/api/v1/friendships/${userId}/followers/`
-    );
-    url.searchParams.set("count", "100");
-    if (nextMaxId) {
-      url.searchParams.set("max_id", nextMaxId);
-    }
+	const url = `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH_PROFILE}&variables=${encodeURIComponent(
+		JSON.stringify(variables)
+	)}`;
 
-    const response = await fetch(url.toString(), {
-      credentials: CREDENTIALS,
-      headers: HEADERS,
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const data = await response.json();
+	try {
+		const response = await fetch(url);
+		if (!response.ok) {
+			throw new Error(`HTTP error! Status: ${response.status}`);
+		}
 
-    // Accumulate the users
-    const users = data?.users ?? [];
-    console.log("[getFollowers] Fetched this batch:", users);
-    allFollowers = [...allFollowers, ...users];
+		const data: InstagramUserProfileResponse = await response.json();
+		const user = data.data.user;
 
-    // Check if there is another page
-    if (data?.next_max_id) {
-      nextMaxId = data.next_max_id;
-    } else {
-      break;
-    }
-  }
+		if (!user) {
+			throw new Error('User profile not found');
+		}
 
-  console.log("[getFollowers] All followers for userId:", userId, allFollowers);
-  return allFollowers;
+		return user;
+	} catch (error) {
+		console.error('Error fetching user profile:', error);
+		throw error;
+	}
 }
 
 /**
- * Fetch all following in batches of 200 per page.
+ * Fetch followers with pagination (50 per batch)
  */
-export async function getFollowing(userId: number): Promise<UserPreview[]> {
-  let allFollowing: UserPreview[] = [];
-  let nextMaxId: string | undefined = undefined;
+export async function fetchFollowers(
+	userId: number,
+	progressCallback?: (progress: number) => void
+): Promise<IgUserPreview[]> {
+	const followers: IgUserPreview[] = [];
+	let after: string | null = null;
+	let hasNext = true;
+	let batchCount = 0;
 
-  while (true) {
-    // Build the URL with pagination parameters
-    const url = new URL(
-      `https://www.instagram.com/api/v1/friendships/${userId}/following/`
-    );
-    url.searchParams.set("count", "200");
-    if (nextMaxId) {
-      url.searchParams.set("max_id", nextMaxId);
-    }
+	while (hasNext) {
+		const variables = {
+			id: userId,
+			include_reel: true,
+			fetch_mutual: true,
+			first: 50,
+			after: after
+		};
 
-    const response = await fetch(url.toString(), {
-      credentials: CREDENTIALS,
-      headers: HEADERS,
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const data = await response.json();
+		const url = `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH_FOLLOWERS}&variables=${encodeURIComponent(
+			JSON.stringify(variables)
+		)}`;
 
-    // Accumulate the users
-    const users = data?.users ?? [];
-    console.log("[getFollowing] Fetched this batch:", users);
-    allFollowing = [...allFollowing, ...users];
+		try {
+			const response = await fetch(url);
+			if (!response.ok) {
+				throw new Error(`HTTP error! Status: ${response.status}`);
+			}
 
-    // Check if there is another page
-    if (data?.next_max_id) {
-      nextMaxId = data.next_max_id;
-    } else {
-      break;
-    }
-  }
+			const data = await response.json();
+			const edges = data.data.user.edge_followed_by.edges;
 
-  console.log("[getFollowing] All following for userId:", userId, allFollowing);
-  return allFollowing;
+			hasNext = data.data.user.edge_followed_by.page_info.has_next_page;
+			after = data.data.user.edge_followed_by.page_info.end_cursor;
+
+			const newFollowers = edges.map(({ node }: any) => ({
+				id: node.id,
+				username: node.username,
+				full_name: node.full_name,
+				profile_pic_url: node.profile_pic_url,
+				is_verified: node.is_verified
+			}));
+
+			followers.push(...newFollowers);
+			batchCount++;
+
+			// Update progress with batch count
+			if (progressCallback) {
+				progressCallback(batchCount);
+			}
+		} catch (error) {
+			console.error('Error fetching followers:', error);
+			break;
+		}
+	}
+
+	console.log('[fetchFollowers] Total followers:', followers.length);
+	return followers;
 }
 
 /**
- * Returns the list of users you follow (following[]) who do NOT follow you back.
+ * Fetch following with pagination (50 per batch)
  */
-export function getNotFollowingBack(
-  followers: UserPreview[],
-  following: UserPreview[]
-): UserPreview[] {
-  // Collect the IDs of everyone who follows you
-  const followerIds = new Set(followers.map((f) => f.id));
+export async function fetchFollowing(
+	userId: number,
+	progressCallback?: (progress: number) => void
+): Promise<IgUserPreview[]> {
+	const following: IgUserPreview[] = [];
+	let after: string | null = null;
+	let hasNext = true;
+	let batchCount = 0;
 
-  // From the list of people you follow, return those who do NOT appear in your followers
-  const notFollowingBack = following.filter((f) => !followerIds.has(f.id));
+	while (hasNext) {
+		const variables = {
+			id: userId,
+			include_reel: true,
+			fetch_mutual: true,
+			first: 50,
+			after: after
+		};
 
-  console.log("[getNotFollowingBack] Count:", notFollowingBack.length);
-  console.log("[getNotFollowingBack] They are:", notFollowingBack);
+		const url = `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH_FOLLOWING}&variables=${encodeURIComponent(
+			JSON.stringify(variables)
+		)}`;
 
-  return notFollowingBack;
+		try {
+			const response = await fetch(url);
+			if (!response.ok) {
+				throw new Error(`HTTP error! Status: ${response.status}`);
+			}
+
+			const data = await response.json();
+			const edges = data.data.user.edge_follow.edges;
+
+			hasNext = data.data.user.edge_follow.page_info.has_next_page;
+			after = data.data.user.edge_follow.page_info.end_cursor;
+
+			const newFollowing = edges.map(({ node }: any) => ({
+				id: node.id,
+				username: node.username,
+				full_name: node.full_name,
+				profile_pic_url: node.profile_pic_url,
+				is_verified: node.is_verified
+			}));
+
+			following.push(...newFollowing);
+			batchCount++;
+
+			// Update progress with batch count
+			if (progressCallback) {
+				progressCallback(batchCount);
+			}
+		} catch (error) {
+			console.error('Error fetching following:', error);
+			break;
+		}
+	}
+
+	console.log('[fetchFollowing] Total following:', following.length);
+	return following;
 }

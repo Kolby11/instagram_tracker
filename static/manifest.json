@@ -7,6 +7,20 @@
 		"default_popup": "index.html",
 		"default_icon": "instagram_tracker.png"
 	},
-	"permissions": ["activeTab", "webRequest"],
-	"host_permissions": ["*://*.instagram.com/*"]
+	"permissions": ["activeTab", "webRequest", "downloads"],
+	"host_permissions": ["*://*.fbcdn.net/*", "*://*.instagram.com/*"],
+	"web_accessible_resources": [
+		{
+			"resources": ["*://*.fbcdn.net/*"],
+			"matches": ["*://*.instagram.com/*"]
+		},
+		{
+			"resources": ["/img/*"],
+			"matches": ["<all_urls>"],
+			"use_dynamic_url": true
+		}
+	],
+	"content_security_policy": {
+		"extension_pages": "script-src 'self'; img-src * data: blob:;"
+	}
 }
