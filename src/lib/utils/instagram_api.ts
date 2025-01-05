@@ -1,8 +1,8 @@
-import type { IgUserPreview, InstagramUserProfileResponse } from '$lib/instagram_models';
+import type { IgUserPreview, InstagramUserProfileResponse, UserProfile } from '$lib/instagram_models';
 
 const QUERY_HASH_FOLLOWERS = 'c76146de99bb02f6415203be841dd25a';
 const QUERY_HASH_FOLLOWING = 'd04b0a864b4b54837c0d870b0e77e076';
-const QUERY_HASH_PROFILE = '7c16654f22c819fb63d1183034a5162f';
+const DOC_ID_PROFILE = '8755478011231574';
 
 /**
  * Get the numeric user ID by username.
@@ -30,13 +30,13 @@ export async function getUserId(username: string): Promise<number> {
 /**
  * Fetch user profile information by user ID.
  */
-export async function fetchUserProfile(userId: number): Promise<any> {
+export async function fetchUserProfile(userId: number): Promise<UserProfile | undefined> {
 	const variables = {
 		id: userId,
 		render_surface: 'PROFILE'
 	};
 
-	const url = `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH_PROFILE}&variables=${encodeURIComponent(
+	const url = `https://www.instagram.com/graphql/query/?doc_id=${DOC_ID_PROFILE}&variables=${encodeURIComponent(
 		JSON.stringify(variables)
 	)}`;
 

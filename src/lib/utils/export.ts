@@ -13,13 +13,8 @@ export function exportAsJSON(userId: number, username: string, followers: IgUser
 		}
 	};
 
-	// 2) Convert it to a JSON string
 	const jsonString = JSON.stringify(exportObject, null, 2);
-
-	// 3) Create a Blob from the JSON string
 	const blob = new Blob([jsonString], { type: 'application/json' });
-
-	// 4) Create a temporary Object URL
 	const url = URL.createObjectURL(blob);
 
 	// 5) Dynamically create an `<a>` element with the download attribute

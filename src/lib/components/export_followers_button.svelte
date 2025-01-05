@@ -1,22 +1,22 @@
 <script lang="ts">
-	import type { HTMLButtonAttributes } from "svelte/elements";
-	import Button from "./button.svelte";
-	import { exportAsJSON } from "$lib/utils/export";
-	import { userState } from "$lib/states/user_state.svelte";
+	import type { HTMLButtonAttributes } from 'svelte/elements';
+	import Button from './button.svelte';
+	import { exportAsJSON } from '$lib/utils/export';
+	import { userState } from '$lib/states/user_state.svelte';
 
-  type ButtonProps = HTMLButtonAttributes
+	type ButtonProps = HTMLButtonAttributes;
 
-  let loading: boolean = false
+	let loading: boolean = false;
 
-  let props: ButtonProps = $props()
+	let props: ButtonProps = $props();
 
-  function onClick(){
-    if (!userState.userId || !userState.username || !userState.followers || !userState.following || loading) return
+	function onClick() {
+		if (!userState.userId || !userState.username || !userState.followers || !userState.following || loading) return;
 
-    exportAsJSON(userState.userId, userState.username, userState.followers, userState.following)
-  }
+		exportAsJSON(userState.userId, userState.username, userState.followers, userState.following);
+	}
 </script>
 
-<Button {...props} onclick={onClick}>
-  {@render props.children?.()}
-</Button>  
+<Button {...props} onclick={onClick} variant="primary">
+	{@render props.children?.()}
+</Button>

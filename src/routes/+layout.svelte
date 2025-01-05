@@ -25,10 +25,4 @@
 	});
 </script>
 
-{#if instagramOpen}
-	{@render children()}
-{:else}
-	<div class="container">
-		<h1>Instagram must be open to use this extension</h1>
-	</div>
-{/if}
+{@render children()}
