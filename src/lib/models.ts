@@ -13,11 +13,16 @@ export type Tab = {
 	active: boolean;
 }
 
-export type ExportJSON = {
+export type DataExport = {
 	followers: IgUser[];
 	following: IgUser[];
 	metadata: ExportMetadata;
 };
+
+export enum ExportFileTypes {
+	json = 'json',
+	yaml = 'yaml'
+}
 
 type ExportMetadata = {
 	userId: number;

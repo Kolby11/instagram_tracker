@@ -40,6 +40,7 @@
 		"vite": "^6.0.5"
 	},
 	"dependencies": {
-		"unplugin-icons": "^0.22.0"
+		"unplugin-icons": "^0.22.0",
+		"yaml": "^2.7.0"
 	}
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 	import Button from './button.svelte';
-	import { exportAsJSON } from '$lib/utils/export';
+	import { exportFile } from '$lib/utils/export';
 	import { userState } from '$lib/states/user_state.svelte';
 
 	type ButtonProps = HTMLButtonAttributes;
@@ -13,7 +13,7 @@
 	function onClick() {
 		if (!userState.userId || !userState.username || !userState.followers || !userState.following || loading) return;
 
-		exportAsJSON(userState.userId, userState.username, userState.followers, userState.following);
+		exportFile(userState.userId, userState.username, userState.followers, userState.following);
 	}
 </script>
 

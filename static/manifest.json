@@ -7,15 +7,6 @@
 		"default_popup": "index.html",
 		"default_icon": "instagram_tracker.png"
 	},
-	"declarative_net_request": {
-		"rule_resources": [
-			{
-				"id": "ruleset_1",
-				"enabled": true,
-				"path": "rules/instagram_img_rules.json"
-			}
-		]
-	},
 	"permissions": ["activeTab", "webRequest", "downloads"],
 	"host_permissions": ["*://*.instagram.com/*", "*://*.cdninstagram.com/*"],
 	"background": {

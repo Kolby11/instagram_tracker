@@ -1,22 +1,53 @@
 <script lang="ts">
-	import type { HTMLButtonAttributes } from "svelte/elements";
-	import Button from "./button.svelte";
-	import { exportAsJSON } from "$lib/utils/export";
-	import { userState } from "$lib/states/user_state.svelte";
+	import type { HTMLButtonAttributes } from 'svelte/elements';
+	import Button from './button.svelte';
+	import { onMount } from 'svelte';
+	import { importFile } from '$lib/utils/import';
 
-  type ButtonProps = HTMLButtonAttributes
+	type ButtonProps = HTMLButtonAttributes;
 
-  let loading: boolean = false
+	let props: ButtonProps = $props();
 
-  let props: ButtonProps = $props()
+	let inputRef: HTMLInputElement;
 
-  function onClick(){
-    if (!userState.userId || !userState.username || !userState.followers || !userState.following || loading) return
+	async function handleFileChange(event: Event) {
+		const target = event.target as HTMLInputElement;
+		if (!target.files?.length) return;
 
-    exportAsJSON(userState.userId, userState.username, userState.followers, userState.following)
-  }
+		const file = target.files[0];
+		try {
+			const parsedData = await importFile(file);
+			console.log('Parsed Data:', parsedData);
+		} catch (error) {
+			console.error('Error importing file:', error);
+		}
+	}
+
+	function triggerFilePicker() {
+		inputRef.click();
+	}
+
+	onMount(() => {
+		if (typeof window === 'undefined') return;
+
+		window.addEventListener('dragover', (event) => {
+			event.preventDefault();
+		});
+
+		window.addEventListener('drop', (event) => {
+			event.preventDefault();
+
+			const dt = event.dataTransfer;
+			if (!dt?.files?.length) return;
+
+			const file = dt.files[0];
+			importFile(file);
+		});
+	});
 </script>
 
-<Button {...props} onclick={onClick}>
-  {@render props.children?.()}
-</Button>  
+<Button {...props} onclick={triggerFilePicker}>
+	{@render props.children?.()}
+
+	<input type="file" accept=".json" style="display: none" bind:this={inputRef} onchange={handleFileChange} />
+</Button>
