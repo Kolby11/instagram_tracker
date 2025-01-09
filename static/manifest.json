@@ -7,7 +7,7 @@
 		"default_popup": "index.html",
 		"default_icon": "instagram_tracker.png"
 	},
-	"permissions": ["activeTab", "webRequest", "downloads"],
+	"permissions": ["activeTab", "webRequest", "downloads", "storage"],
 	"host_permissions": ["*://*.instagram.com/*", "*://*.cdninstagram.com/*"],
 	"background": {
 		"service_worker": "background.js"

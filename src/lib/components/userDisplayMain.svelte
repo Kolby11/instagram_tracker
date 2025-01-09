@@ -38,13 +38,17 @@
 	});
 </script>
 
-<div class="mt-4 flex flex-col items-center">
+<div class="m-4 flex h-24 items-stretch gap-4">
 	{#if userProfile}
-		<img src={loadedImageUrl || userProfile.profile_pic_url} alt="Profile Picture" class="size-16 rounded-full" />
-		<div class="flex flex-col items-center">
-			<h2 class="mt-2 text-xl">{userProfile.full_name}</h2>
-			<p>@{userProfile.username}</p>
-			<div class="mt-2 flex gap-4">
+		<img
+			src={loadedImageUrl || userProfile.profile_pic_url}
+			alt="Profile"
+			class="h-full w-auto rounded-full object-cover"
+		/>
+		<div class="flex h-full flex-col justify-center">
+			<h2 class="text-xl font-bold" title="Full name">{userProfile.full_name}</h2>
+			<p class="text-gray-600 dark:text-neutral-200" title="Username">@{userProfile.username}</p>
+			<div class="mt-2 flex gap-4 text-gray-700 dark:text-neutral-100">
 				<p><strong>{userProfile.follower_count}</strong> Followers</p>
 				<p><strong>{userProfile.following_count}</strong> Following</p>
 			</div>

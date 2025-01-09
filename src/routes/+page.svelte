@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import UserDisplayMain from '$lib/components/user_display_main.svelte';
+	import UserDisplayMain from '$lib/components/userDisplayMain.svelte';
 	import Button from '$lib/components/button.svelte';
 	import ExportFollowersButton from '$lib/components/export_followers_button.svelte';
 	import ProgressBar from '$lib/components/progress_bar.svelte';
@@ -11,14 +11,16 @@
 	import { parseIgUserPreviews } from '$lib/utils/users';
 
 	import { userState } from '$lib/states/user_state.svelte';
-	import { getUsernameFromURL, openInNewTab } from '$lib/utils/browser';
-	import TabsVertical from '$lib/components/misc/tabs_vertical.svelte';
+	import { getUsernameFromURL } from '$lib/utils/browser';
+	import TabsVertical from '$lib/components/misc/tabsVertical.svelte';
 	import { page } from '$app/state';
 	import { pageTabs } from '$lib/data';
-	import ImportFollowersButton from '$lib/components/import_followers_button.svelte';
-	import UserList from '$lib/components/user_list.svelte';
-	import { activeTabId } from '$lib/states/tab_state.svelte';
-	import Icon from '@iconify/svelte';
+	import ImportFollowersButton from '$lib/components/importFollowersButton.svelte';
+	import UserList from '$lib/components/userList.svelte';
+	import { activeTabId } from '$lib/components/stores/tabStore';
+	import IcRoundFileDownload from '~icons/ic/round-file-download';
+	import ThemeButton from '$lib/components/misc/themeButton.svelte';
+	import FullscreenButton from '$lib/components/misc/fullscreenButton.svelte';
 
 	let params = $derived(new URL(page.url).searchParams);
 
@@ -98,48 +100,48 @@
 			loadingFollowers = false;
 		}
 	}
-
-	function fullscreenButtonClick() {
-		openInNewTab(`${chrome.runtime.getURL('index.html')}?username=${userState.username}`);
-	}
 </script>
 
-<div class="w-full min-w-96">
-	<div class="relative w-full px-2 pt-2">
-		<h1 class="border-b pb-2 text-center text-3xl">Instagram Tracker</h1>
-
-		<!-- Use a button that calls openInNewTab instead of an <a> tag -->
-		<button
-			onclick={fullscreenButtonClick}
-			class="absolute right-0 top-0 flex items-center justify-center p-2 md:hidden"
-			style="background: none; border: none; cursor: pointer;"
-		>
-			<Icon icon="ic:round-open-in-new" width="24" height="24" aria-label="Fullscreen" />
-		</button>
+<div
+	class="flex min-h-0 w-full min-w-96 flex-col bg-neutral-100 text-neutral-900 transition dark:bg-neutral-800 dark:text-neutral-100 sm:h-screen"
+>
+	<!-- Header -->
+	<div class="flex w-full items-center justify-between bg-white px-4 py-1.5 dark:bg-neutral-700">
+		<h1 class="text-center text-xl">Instagram Tracker</h1>
+		<div class="flex items-center justify-center gap-2">
+			<ThemeButton class="" />
+			<FullscreenButton class="md:hidden" />
+		</div>
 	</div>
 
-	<UserDisplayMain {userProfile} />
-	<div class="flex items-stretch justify-start gap-4">
-		<div class="mt-4 flex flex-col items-center justify-between border-r border-gray-400 pr-2 text-base max-sm:text-xs">
+	<div class="flex items-center justify-center border-b border-neutral-200 dark:border-neutral-600">
+		<UserDisplayMain {userProfile} />
+	</div>
+
+	<!-- Content -->
+	<div class="flex min-h-0 grow items-stretch">
+		<!-- Key: min-h-0 on flex parent -->
+		<div
+			class="flex flex-col items-center justify-between border-r border-neutral-200 py-2 pr-2 text-base dark:border-neutral-600 max-sm:text-xs sm:py-4"
+		>
+			<!-- Left panel content -->
 			<div class="flex items-start">
 				<TabsVertical tabs={pageTabs} />
 			</div>
-			<div class="mb-4 mt-10 flex flex-col items-center justify-center gap-2">
-				<ImportFollowersButton>
-					<div class="flex items-center justify-center gap-2">
-						<Icon icon="ic:round-file-upload" aria-label="Import data" class="size-4 sm:size-6" />
-						<p>Import data</p>
-					</div>
-				</ImportFollowersButton>
+			<div class="mt-10 flex flex-col items-center justify-center gap-2">
+				<ImportFollowersButton />
 				<ExportFollowersButton>
 					<div class="flex items-center justify-center gap-2">
-						<Icon icon="ic:round-file-download" aria-label="Export data" class="size-4 sm:size-6" />
+						<IcRoundFileDownload aria-label="Export data" class="size-4 sm:size-6" />
 						<p>Export data</p>
 					</div>
 				</ExportFollowersButton>
 			</div>
 		</div>
-		<div class="flex grow">
+
+		<!-- Right side -->
+		<div class="flex min-h-0 grow flex-col">
+			<!-- Another min-h-0 for nested flex -->
 			{#if userState.userId && !userState.followers && !userState.following}
 				<div class="flex items-center justify-center">
 					<Button
@@ -155,17 +157,15 @@
 						{/if}
 					</Button>
 				</div>
-				<!-- If loading, show progress bar -->
+
 				{#if loadingFollowers}
 					<ProgressBar {progress} />
 				{/if}
 			{:else}
-				<UserList followers={userState.followers} following={userState.following} filter_by_tab={$activeTabId} />
+				<UserList followers={userState.followers} following={userState.following} filterByTab={$activeTabId} />
 			{/if}
 		</div>
 	</div>
-
-	<p>User ID: {userState.userId}</p>
 </div>
 
 <style>

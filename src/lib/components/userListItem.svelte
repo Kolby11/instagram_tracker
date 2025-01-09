@@ -42,7 +42,8 @@
 </script>
 
 <li class="flex items-center justify-start gap-x-1" {...props}>
-	<img src={loadedImageUrl || user.profile_pic_url} alt="Profile Picture" class="size-4 rounded-full" />
+	<!-- svelte-ignore a11y_img_redundant_alt -->
+	<img src={loadedImageUrl || user.profile_pic_url} alt="Profile Picture" class="size-4 rounded-full sm:size-8" />
 	<p>{user.username}</p>
 	{#if user.is_verified}
 		<img src={chrome.runtime.getURL('img/verified.svg')} alt="Verified" />

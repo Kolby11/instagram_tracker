@@ -1,4 +1,6 @@
 // background.js
+
+// Image fetcher
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === 'FETCH_IMAGE') {
 		fetch(request.url)
@@ -24,6 +26,36 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				sendResponse({ success: false, error: error.message });
 			});
 
-		return true; // Keep the message channel open
+		return true;
+	}
+});
+
+const Theme = {
+	LIGHT: 'light',
+	DARK: 'dark'
+};
+
+// Theme setter and getter
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	if (message.type === 'setTheme') {
+		chrome.storage.sync
+			.set({ theme: message.theme })
+			.then(() => {
+				sendResponse({ success: true });
+				return false;
+			})
+			.catch((error) => {
+				sendResponse({ success: false, error: error.message });
+				return false;
+			});
+		return true;
+	}
+
+	if (message.type === 'getTheme') {
+		chrome.storage.sync.get(['theme']).then(({ theme }) => {
+			sendResponse({ theme: theme });
+			return false;
+		});
+		return true;
 	}
 });
