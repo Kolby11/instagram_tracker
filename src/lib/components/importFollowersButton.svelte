@@ -4,6 +4,8 @@
 	import { onMount } from 'svelte';
 	import { importFile } from '$lib/utils/import';
 	import IcRoundFileUpload from '~icons/ic/round-file-upload';
+	import { userDataStore } from '$lib/stores/userDataStore';
+	import { importDataIntoUserState } from '$lib/utils/users';
 
 	type ButtonProps = HTMLButtonAttributes;
 
@@ -18,6 +20,7 @@
 		const file = target.files[0];
 		try {
 			const parsedData = await importFile(file);
+			importDataIntoUserState(userDataStore, parsedData);
 			console.log('Parsed Data:', parsedData);
 		} catch (error) {
 			console.error('Error importing file:', error);

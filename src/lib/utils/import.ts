@@ -1,5 +1,5 @@
 import YAML from 'yaml';
-import type { DataExport } from '$lib/models';
+import type { DataExport } from '$lib/types/exportTypes';
 
 /**
  * Main importFile function using async/await.

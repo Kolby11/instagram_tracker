@@ -1,21 +1,24 @@
 <script lang="ts">
-	import type { IgUser } from '$lib/instagram_models';
-	import { TabId } from '$lib/models';
 	import { getIDontFollowBack, getNotFollowingMeBack } from '$lib/utils/followers';
 	import IcRoundArrowBackIos from '~icons/ic/round-arrow-back-ios';
 	import IcRoundArrowForwardIos from '~icons/ic/round-arrow-forward-ios';
 	import UserListItem from './userListItem.svelte';
+	import { TabId } from '$lib/types/appTypes';
+	import type { UserPreview } from '$lib/types/userTypes';
 
 	const itemsPerPage = 25;
 
-	let { followers, following, filterByTab }: { followers?: IgUser[]; following?: IgUser[]; filterByTab: TabId } =
-		$props();
+	let {
+		followers,
+		following,
+		filterByTab
+	}: { followers?: UserPreview[]; following?: UserPreview[]; filterByTab: TabId } = $props();
 
 	const users = $derived.by(() => {
-		if (filterByTab === TabId.followers) return followers;
-		if (filterByTab === TabId.following) return following;
-		if (filterByTab === TabId.not_following_me_back) return notFollowingMeBack;
-		if (filterByTab === TabId.i_dont_follow_back) return iDontFollowBack;
+		if (filterByTab === TabId.FOLLOWERS) return followers;
+		if (filterByTab === TabId.FOLLOWING) return following;
+		if (filterByTab === TabId.NOT_FOLLOWING_ME_BACK) return notFollowingMeBack;
+		if (filterByTab === TabId.I_DONT_FOLLOW_BACK) return iDontFollowBack;
 	});
 
 	let notFollowingMeBack = $derived(followers && following ? getNotFollowingMeBack(following, followers) : []);

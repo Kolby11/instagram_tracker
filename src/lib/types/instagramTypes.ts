@@ -150,17 +150,9 @@ export type IgUserPreview = {
 	is_favorite: boolean;
 };
 
-export type IgUser = {
-	id: number;
-	username: string;
-	is_private: boolean;
-	profile_pic_url: string;
-	is_verified: boolean;
-};
-
-export interface InstagramUserProfileResponse {
+export interface IGUserProfileResponse {
 	data: {
-		user: UserProfile;
+		user: IGUserProfile;
 		viewer: Viewer;
 	};
 	extensions: {
@@ -169,7 +161,7 @@ export interface InstagramUserProfileResponse {
 	status: string;
 }
 
-export type UserProfile = {
+export type IGUserProfile = {
 	friendship_status: FriendshipStatus;
 	gating: any | null;
 	is_checkpoint_memorialized: boolean;

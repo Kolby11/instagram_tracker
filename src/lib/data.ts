@@ -1,10 +1,14 @@
-import { TabId, type Tab } from "./models";
+import { TabId, type Tab } from "./types/appTypes";
 
 export const pageTabs: Tab[] = [
-  { name: 'Followers', id: TabId.followers, active: true },
-  { name: 'Following', id: TabId.following,  active: false },
-  { name: 'Not Following Me Back', id: TabId.not_following_me_back, active: false },
-  { name: "I Don't Follow Back",id: TabId.i_dont_follow_back, active: false }
+  { name: 'Followers', id: TabId.FOLLOWERS, active: true },
+  { name: 'Following', id: TabId.FOLLOWING,  active: false },
+  { name: 'Not Following Me Back', id: TabId.NOT_FOLLOWING_ME_BACK, active: false },
+  { name: "I Don't Follow Back",id: TabId.I_DONT_FOLLOW_BACK, active: false },
+  { name: 'Unfollowers', id: TabId.UNFOLLOWERS, active: false },
+  { name: 'New Followers', id: TabId.NEW_FOLLOWERS, active: false },
+  { name: 'I Unfollowed', id: TabId.I_UNFOLLOWED, active: false },
+  { name: 'New Following', id: TabId.NEW_FOLLOWING, active: false }
 ]
 
 export enum UserListFilter {
@@ -12,5 +16,9 @@ export enum UserListFilter {
   Followers,
   Following,
   NotFollowingMeBack,
-  IDontFollowBack
+  IDontFollowBack,
+  Unfollowers,
+  NewFollowers,
+  IUnfollowed,
+  NewFollowing
 }

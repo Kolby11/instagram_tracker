@@ -1,4 +1,4 @@
-import type { IgUserPreview, InstagramUserProfileResponse, UserProfile } from '$lib/instagram_models';
+import type { IgUserPreview, IGUserProfileResponse, IGUserProfile } from '$lib/types/instagramTypes';
 
 const QUERY_HASH_FOLLOWERS = 'c76146de99bb02f6415203be841dd25a';
 const QUERY_HASH_FOLLOWING = 'd04b0a864b4b54837c0d870b0e77e076';
@@ -30,7 +30,7 @@ export async function getUserId(username: string): Promise<number> {
 /**
  * Fetch user profile information by user ID.
  */
-export async function fetchUserProfile(userId: number): Promise<UserProfile | undefined> {
+export async function fetchUserProfile(userId: number): Promise<IGUserProfile | undefined> {
 	const variables = {
 		id: userId,
 		render_surface: 'PROFILE'
@@ -46,7 +46,7 @@ export async function fetchUserProfile(userId: number): Promise<UserProfile | un
 			throw new Error(`HTTP error! Status: ${response.status}`);
 		}
 
-		const data: InstagramUserProfileResponse = await response.json();
+		const data: IGUserProfileResponse = await response.json();
 		const user = data.data.user;
 
 		if (!user) {
@@ -81,7 +81,7 @@ export async function fetchFollowers(
 			after: after
 		};
 
-		const url = `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH_FOLLOWERS}&variables=${encodeURIComponent(
+		const url: string = `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH_FOLLOWERS}&variables=${encodeURIComponent(
 			JSON.stringify(variables)
 		)}`;
 
@@ -97,7 +97,7 @@ export async function fetchFollowers(
 			hasNext = data.data.user.edge_followed_by.page_info.has_next_page;
 			after = data.data.user.edge_followed_by.page_info.end_cursor;
 
-			const newFollowers = edges.map(({ node }: any) => ({
+			const newFollowers = edges.map(({ node }: {node: IGUserProfile}) => ({
 				id: node.id,
 				username: node.username,
 				full_name: node.full_name,
@@ -143,7 +143,7 @@ export async function fetchFollowing(
 			after: after
 		};
 
-		const url = `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH_FOLLOWING}&variables=${encodeURIComponent(
+		const url: string = `https://www.instagram.com/graphql/query/?query_hash=${QUERY_HASH_FOLLOWING}&variables=${encodeURIComponent(
 			JSON.stringify(variables)
 		)}`;
 
@@ -159,7 +159,7 @@ export async function fetchFollowing(
 			hasNext = data.data.user.edge_follow.page_info.has_next_page;
 			after = data.data.user.edge_follow.page_info.end_cursor;
 
-			const newFollowing = edges.map(({ node }: any) => ({
+			const newFollowing = edges.map(({ node }: {node: IGUserProfile}) => ({
 				id: node.id,
 				username: node.username,
 				full_name: node.full_name,

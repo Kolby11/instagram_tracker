@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Tab, TabId } from '$lib/models';
-	import { activeTabId } from '$lib/components/stores/tabStore';
+	import type { Tab, TabId } from '$lib/types/appTypes';
+	import { activeTabId } from '$lib/stores/tabStore';
 
 	const { tabs }: { tabs: Tab[] } = $props();
 

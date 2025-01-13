@@ -1,11 +1,14 @@
-import { writable, type Writable } from 'svelte/store';
+import { writable, type Writable } from "svelte/store";
 
-type Theme = 'light' | 'dark';
+export enum Theme {
+  LIGHT = 'light',
+  DARK = 'dark',
+}
 
-export const themeStore: Writable<Theme | undefined> = writable<Theme | undefined>();
+export const themeStore: Writable<Theme> = writable(Theme.LIGHT);
 
 export function initializeTheme(): void {
-  let theme: Theme = 'light';
+  let theme: Theme = Theme.LIGHT;
   if (typeof window !== 'undefined') {
     theme = getSystemTheme();
   }
@@ -13,8 +16,8 @@ export function initializeTheme(): void {
 }
 
 function getSystemTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (typeof window === 'undefined') return Theme.LIGHT;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? Theme.DARK : Theme.LIGHT;
 }
 
 function applyTheme(theme: Theme): void {
@@ -42,7 +45,7 @@ export function setTheme(theme: Theme): void {
 
 export function toggleTheme(): void {
   themeStore.update(currentTheme => {
-    const newTheme: Theme = currentTheme === 'dark' ? 'light' : 'dark';
+    const newTheme: Theme = currentTheme === Theme.DARK ? Theme.LIGHT : Theme.DARK;
     setTheme(newTheme);
     return newTheme;
   });

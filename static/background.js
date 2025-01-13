@@ -30,11 +30,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	}
 });
 
-const Theme = {
-	LIGHT: 'light',
-	DARK: 'dark'
-};
-
 // Theme setter and getter
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.type === 'setTheme') {

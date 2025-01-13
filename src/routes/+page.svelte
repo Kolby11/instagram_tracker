@@ -4,23 +4,23 @@
 	import Button from '$lib/components/button.svelte';
 	import ExportFollowersButton from '$lib/components/export_followers_button.svelte';
 	import ProgressBar from '$lib/components/progress_bar.svelte';
-	import type { UserProfile } from '$lib/instagram_models';
+	import type { IGUserProfile } from '$lib/types/instagramTypes';
 
 	// Utility functions & state
-	import { getUserId, fetchUserProfile, fetchFollowers, fetchFollowing } from '$lib/utils/instagram_api';
-	import { parseIgUserPreviews } from '$lib/utils/users';
-
-	import { userState } from '$lib/states/user_state.svelte';
+	import { getUserId, fetchUserProfile, fetchFollowers, fetchFollowing } from '$lib/utils/instagramApi';
+	import { parseIgUserProfile, parseIgUserPreviews } from '$lib/utils/users';
 	import { getUsernameFromURL } from '$lib/utils/browser';
 	import TabsVertical from '$lib/components/misc/tabsVertical.svelte';
+	import { userDataStore } from '$lib/stores/userDataStore';
 	import { page } from '$app/state';
 	import { pageTabs } from '$lib/data';
 	import ImportFollowersButton from '$lib/components/importFollowersButton.svelte';
 	import UserList from '$lib/components/userList.svelte';
-	import { activeTabId } from '$lib/components/stores/tabStore';
+	import { activeTabId } from '$lib/stores/tabStore';
 	import IcRoundFileDownload from '~icons/ic/round-file-download';
 	import ThemeButton from '$lib/components/misc/themeButton.svelte';
 	import FullscreenButton from '$lib/components/misc/fullscreenButton.svelte';
+	import { get } from 'svelte/store';
 
 	let params = $derived(new URL(page.url).searchParams);
 
@@ -28,7 +28,7 @@
 	let loadFollowersError = false;
 	let progress = 0;
 
-	let userProfile: UserProfile | undefined = $state();
+	let userProfile: IGUserProfile | undefined = $state();
 
 	onMount(async () => {
 		await handleURLChange();
@@ -40,23 +40,47 @@
 
 	async function handleURLChange() {
 		const newUsername = (await getUsernameFromURL()) || params.get('username') || '';
-		console.log('Username:', newUsername); // Add this log
+		console.log('Username:', newUsername);
 		if (!newUsername) return;
 
 		const newUserId = await getUserId(newUsername);
-		console.log('UserId:', newUserId); // Add this log
-		userState.username = newUsername;
-		userState.userId = newUserId;
+		console.log('UserId:', newUserId);
 
+		/**
+		 * 1) Update the store for username & userId
+		 *    We'll do this immediately, so that the store reflects
+		 *    at least the new ID even before we fetch the profile.
+		 */
+		userDataStore.update((state) => {
+			// If there's no profile or the username changed, set it
+			if (!state.profile || state.profile.username !== newUsername) {
+				state.profile = { username: newUsername };
+			}
+			state.userId = newUserId;
+			return state;
+		});
+
+		/**
+		 * 2) If we have a valid newUserId, fetch the profile.
+		 *    Then update the store with the returned data.
+		 */
 		if (newUserId) {
-			userProfile = await fetchUserProfile(newUserId);
-			console.log('Fetched userProfile:', userProfile); // Add this log
+			const userProfile = await fetchUserProfile(newUserId);
+			if (userProfile) {
+				userDataStore.update((state) => {
+					// Parse the newly fetched data into your preferred shape
+					state.profile = parseIgUserProfile(userProfile);
+					return state;
+				});
+			}
+			console.log('Fetched userProfile:', get(userDataStore).profile);
+			console.log('Fetched userProfile (raw):', userProfile);
 		}
 	}
 
 	// The main analysis function
 	async function analyzeFollowers() {
-		if (loadingFollowers || !userState.userId) return;
+		if (loadingFollowers || !$userDataStore.userId) return;
 
 		loadingFollowers = true;
 		loadFollowersError = false;
@@ -68,11 +92,11 @@
 
 			// Fetch followers & following in parallel
 			const [followers, following] = await Promise.all([
-				fetchFollowers(userState.userId, (currentProgress) => {
+				fetchFollowers($userDataStore.userId, (currentProgress) => {
 					followersProgress = currentProgress * 100;
 					progress = Math.floor((followersProgress + followingProgress) / 2);
 				}),
-				fetchFollowing(userState.userId, (currentProgress) => {
+				fetchFollowing($userDataStore.userId, (currentProgress) => {
 					followingProgress = currentProgress * 100;
 					progress = Math.floor((followersProgress + followingProgress) / 2);
 				})
@@ -82,17 +106,22 @@
 			progress = 100;
 
 			// parseIgUserPreviews is your utility
-			const formattedFollowers = parseIgUserPreviews(followers);
-			const formattedFollowing = parseIgUserPreviews(following);
+			const parsedFollowers = parseIgUserPreviews(followers);
+			const parsedFollowing = parseIgUserPreviews(following);
 
-			if (!formattedFollowers || !formattedFollowing) {
+			if (!parsedFollowers || !parsedFollowing) {
 				loadFollowersError = true;
 				return;
 			}
 
-			// Save in userState
-			userState.followers = formattedFollowers;
-			userState.following = formattedFollowing;
+			// Save in $userDataStore
+			userDataStore.update((e) => {
+				return {
+					...e,
+					followers: parsedFollowers,
+					following: parsedFollowing
+				};
+			});
 		} catch (error) {
 			console.error('Error in analyzeFollowers:', error);
 			loadFollowersError = true;
@@ -115,7 +144,7 @@
 	</div>
 
 	<div class="flex items-center justify-center border-b border-neutral-200 dark:border-neutral-600">
-		<UserDisplayMain {userProfile} />
+		<UserDisplayMain userProfile={$userDataStore.profile} />
 	</div>
 
 	<!-- Content -->
@@ -142,7 +171,7 @@
 		<!-- Right side -->
 		<div class="flex min-h-0 grow flex-col">
 			<!-- Another min-h-0 for nested flex -->
-			{#if userState.userId && !userState.followers && !userState.following}
+			{#if $userDataStore.userId && !$userDataStore.followers && !$userDataStore.following}
 				<div class="flex items-center justify-center">
 					<Button
 						loading={loadingFollowers}
@@ -162,7 +191,11 @@
 					<ProgressBar {progress} />
 				{/if}
 			{:else}
-				<UserList followers={userState.followers} following={userState.following} filterByTab={$activeTabId} />
+				<UserList
+					followers={$userDataStore.followers}
+					following={$userDataStore.following}
+					filterByTab={$activeTabId}
+				/>
 			{/if}
 		</div>
 	</div>

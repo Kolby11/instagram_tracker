@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { Tab } from '$lib/models';
+	import type { Tab } from '$lib/types/appTypes';
 
 	export let tabs: Tab[] = [];
 </script>
 
 <ul
-	class="flex gap-0.5 border-b border-gray-200 text-base text-gray-500 max-sm:text-xs dark:border-gray-700 dark:text-gray-400"
+	class="flex gap-0.5 border-b border-gray-200 text-base text-gray-500 dark:border-gray-700 dark:text-gray-400 max-sm:text-xs"
 >
 	{#each tabs as tab (tab.name)}
 		<li>

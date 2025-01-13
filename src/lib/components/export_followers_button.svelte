@@ -2,7 +2,7 @@
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 	import Button from './button.svelte';
 	import { exportFile } from '$lib/utils/export';
-	import { userState } from '$lib/states/user_state.svelte';
+	import { userDataStore } from '$lib/stores/userDataStore';
 
 	type ButtonProps = HTMLButtonAttributes;
 
@@ -11,9 +11,16 @@
 	let props: ButtonProps = $props();
 
 	function onClick() {
-		if (!userState.userId || !userState.username || !userState.followers || !userState.following || loading) return;
+		if (
+			!$userDataStore.userId ||
+			!$userDataStore?.profile?.username ||
+			!$userDataStore.followers ||
+			!$userDataStore.following ||
+			loading
+		)
+			return;
 
-		exportFile(userState.userId, userState.username, userState.followers, userState.following);
+		exportFile($userDataStore);
 	}
 </script>
 
