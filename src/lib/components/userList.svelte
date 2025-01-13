@@ -1,36 +1,19 @@
 <script lang="ts">
-	import { getIDontFollowBack, getNotFollowingMeBack } from '$lib/utils/followers';
 	import IcRoundArrowBackIos from '~icons/ic/round-arrow-back-ios';
 	import IcRoundArrowForwardIos from '~icons/ic/round-arrow-forward-ios';
 	import UserListItem from './userListItem.svelte';
-	import { TabId } from '$lib/types/appTypes';
 	import type { UserPreview } from '$lib/types/userTypes';
 
 	const itemsPerPage = 25;
 
-	let {
-		followers,
-		following,
-		filterByTab
-	}: { followers?: UserPreview[]; following?: UserPreview[]; filterByTab: TabId } = $props();
-
-	const users = $derived.by(() => {
-		if (filterByTab === TabId.FOLLOWERS) return followers;
-		if (filterByTab === TabId.FOLLOWING) return following;
-		if (filterByTab === TabId.NOT_FOLLOWING_ME_BACK) return notFollowingMeBack;
-		if (filterByTab === TabId.I_DONT_FOLLOW_BACK) return iDontFollowBack;
-	});
-
-	let notFollowingMeBack = $derived(followers && following ? getNotFollowingMeBack(following, followers) : []);
-
-	let iDontFollowBack = $derived(followers && following ? getIDontFollowBack(following, followers) : []);
+	let { users }: { users: UserPreview[] } = $props();
 
 	// Pagination helpers
 	let currentPage = $state(1);
 
 	// Reset the current page when the tab changes
 	$effect(() => {
-		filterByTab && (currentPage = 1);
+		users && (currentPage = 1);
 	});
 
 	const totalPages: number | undefined = $derived.by(() =>

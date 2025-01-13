@@ -1,16 +1,16 @@
 import YAML from 'yaml';
-import type { DataExport } from '$lib/types/exportTypes';
+import type { ExportData } from '$lib/types/exportTypes';
 
 /**
  * Main importFile function using async/await.
  */
-export async function importFile(file: File): Promise<DataExport | undefined> {
+export async function importFile(file: File): Promise<ExportData | undefined> {
   const extension = file.name.split('.').pop()?.toLowerCase();
 
   // Wait for the file text to be fully read
   const content = await readFileAsText(file);
 
-  let parsed: DataExport | undefined;
+  let parsed: ExportData | undefined;
   if (extension === 'json') {
     parsed = JSON.parse(content);
   } else if (extension === 'yaml' || extension === 'yml') {
@@ -41,4 +41,5 @@ async function readFileAsText(file: File): Promise<string> {
     reader.readAsText(file);
   });
 }
+
 

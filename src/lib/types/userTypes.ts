@@ -21,15 +21,18 @@ export type UserData = {
 	profile?: UserProfile;
 	followers?: UserPreview[];
 	following?: UserPreview[];
+	notFollowingMeBack?: UserPreview[];
+	iDontFollowBack?: UserPreview[];
 	history?: UserHistory;
+	currentDiff?: UserDifference;
 };
 
 export type UserDifference = {
-	profile: UserProfile;
-	newFollowers: UserPreview[];
-	unfollowers: UserPreview[];
-	newFollowing: UserPreview[];
-	unfollowing: UserPreview[];
+	profile?: UserProfile;
+	newFollowers?: UserPreview[];
+	unfollowers?: UserPreview[];
+	newFollowing?: UserPreview[];
+	iUnfollowed?: UserPreview[];
 };
 
 export type DifferenceRecord = {

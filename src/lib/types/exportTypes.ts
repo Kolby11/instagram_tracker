@@ -1,10 +1,9 @@
-import type { UserHistory, UserPreview, UserProfile } from "./userTypes";
+import type { DifferenceRecord, UserData} from "./userTypes";
 
 export type ExportData = {
-	profile?: UserProfile;
-  history?: UserHistory;
-	followers?: UserPreview[];
-	following?: UserPreview[];
+  initialState: UserData;
+	latestState: UserData;
+	records: DifferenceRecord[];
 	metadata: ExportMetadata;
 };
 

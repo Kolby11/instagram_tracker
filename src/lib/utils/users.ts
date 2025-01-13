@@ -1,7 +1,5 @@
-import type { ExportData } from '$lib/types/exportTypes';
 import type { IgUserPreview, IGUserProfile } from '$lib/types/instagramTypes';
-import type { UserData, UserPreview, UserProfile } from '$lib/types/userTypes';
-import type { Writable } from 'svelte/store';
+import type { UserPreview, UserProfile } from '$lib/types/userTypes';
 
 export function parseIgUserPreviews(users: IgUserPreview[]): UserPreview[] {
 	return users.map((u) => {
@@ -26,17 +24,41 @@ export function parseIgUserProfile(user: IGUserProfile): UserProfile {
 	};
 }
 
-export function importDataIntoUserState(userDataStore: Writable<UserData>, data: ExportData): void {
-	const newUserData: UserData = {
-		userId: data.metadata.userId,
-		profile: {
-			username: data.profile?.username || data.metadata.username,
-			profilePicUrl: data.profile?.profilePicUrl,
-			bio: data.profile?.bio
-		},
-		followers: data.followers,
-		following: data.following,
-		history: data.history
+/**
+ * Utility to find items in `current` that are not in `previous` (by `id`).
+ */
+export function findDifferences(
+	current: UserPreview[] = [],
+	previous: UserPreview[] = []
+): UserPreview[] {
+	return current.filter(
+		(cur) => !previous.some((prev) => prev.id === cur.id)
+	);
+}
+
+/**
+ * Compare two profiles (new vs. old).
+ * Return `undefined` if no changes; otherwise, return an object
+ * that shows what changed in each field.
+ */
+export function diffProfile(newProfile?: UserProfile, oldProfile?: UserProfile) {
+	if (!newProfile && !oldProfile) return undefined;
+
+	const n = newProfile ?? {};
+	const o = oldProfile ?? {};
+
+	const changedKeys: (keyof UserProfile)[] = [];
+	for (const key of Object.keys(n) as (keyof UserProfile)[]) {
+		if (!Object.keys(o).includes(key) || n[key] !== o[key]) {
+			changedKeys.push(key);
+		}
 	}
-	userDataStore.set(newUserData);
+
+	if (!changedKeys.length) return undefined;
+
+	const result: Record<string, unknown> = {};
+	for (const key of changedKeys) {
+		result[key] = n[key];
+	}
+	return result;
 }

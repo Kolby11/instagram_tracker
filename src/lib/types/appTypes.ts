@@ -12,5 +12,5 @@ export enum TabId {
 export type Tab = {
   name: string;
   id: TabId;
-  active: boolean;
+  count?: number;
 }

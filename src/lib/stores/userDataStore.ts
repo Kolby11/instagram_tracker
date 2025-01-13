@@ -1,100 +1,158 @@
-import type { UserData, UserPreview } from "$lib/types/userTypes";
+import type { ExportData } from "$lib/types/exportTypes";
+import type { UserData } from "$lib/types/userTypes";
 import { writable, type Writable } from "svelte/store";
+import { browser } from "$app/environment";
+import { diffProfile, findDifferences } from "$lib/utils/users";
 
+// Initialize store with default empty state
 export const userDataStore: Writable<UserData> = writable({});
 
 /**
- * Utility to find items in `current` that are not in `previous` (by `id`).
+ * importDataIntoUserStore
+ * Merges the provided ExportData (initialState, latestState, records, metadata)
+ * into our store's UserData history. We no longer read top-level followers or profile
+ * from `data`; we read them from `data.latestState` or `data.initialState`.
  */
-function findDifferences(
-  current: UserPreview[] = [],
-  previous: UserPreview[] = []
-): UserPreview[] {
-  return current.filter(
-    (cur) => !previous.some((prev) => prev.id === cur.id)
-  );
+export function importDataIntoUserStore(
+  userDataStore: Writable<UserData>,
+  data: ExportData
+): void {
+  userDataStore.update((oldData) => {
+    const updatedValue = structuredClone(oldData);
+
+    // Ensure we have a history object
+    if (!updatedValue.history) {
+      updatedValue.history = {
+        initialState: structuredClone(data.initialState ?? {}),
+        latestState: structuredClone(data.latestState ?? {}),
+        records: data.records ? [...data.records] : [],
+      };
+    } else {
+      if (!updatedValue.history.initialState) {
+        updatedValue.history.initialState = structuredClone(data.initialState ?? {});
+      }
+
+      // Merge any imported records
+      updatedValue.history.records = [
+        ...updatedValue.history.records,
+        ...(data.records ?? []),
+      ];
+    }
+
+    // 3) Compare oldLatest vs. the new (imported) latestState
+    const oldLatest = updatedValue.history.latestState ?? {};
+    const newLatest = data.latestState || data.initialState;
+
+    // ---- NEW SECTION: Skip the diff if oldLatest has no data ----
+    if (
+      (!oldLatest.followers || oldLatest.followers.length === 0) &&
+      (!oldLatest.following || oldLatest.following.length === 0)
+    ) {
+      // Just update latestState, no record
+      updatedValue.history.latestState = structuredClone(newLatest);
+      return updatedValue; // <-- This returns early, skipping the diff logic below
+    }
+    // --------------------------------------------------------------
+
+    // Followers / following arrays
+    const newFollowers = findDifferences(newLatest.followers ?? [], oldLatest.followers ?? []);
+    const unfollowers = findDifferences(oldLatest.followers ?? [], newLatest.followers ?? []);
+    const newFollowing = findDifferences(newLatest.following ?? [], oldLatest.following ?? []);
+    const iUnfollowed = findDifferences(oldLatest.following ?? [], newLatest.following ?? []);
+
+    // Compare profiles
+    const profileDiff = diffProfile(newLatest.profile, oldLatest.profile);
+
+    // 4) Build the diff record if changes exist
+    const diff: Record<string, unknown> = {};
+    if (profileDiff) diff.profile = profileDiff;
+    if (newFollowers.length) diff.newFollowers = newFollowers;
+    if (unfollowers.length) diff.unfollowers = unfollowers;
+    if (newFollowing.length) diff.newFollowing = newFollowing;
+    if (iUnfollowed.length) diff.iUnfollowed = iUnfollowed;
+
+    if (Object.keys(diff).length > 0) {
+      updatedValue.history.records.push({
+        diff,
+        timestamp: new Date(),
+      });
+    }
+
+    // 5) Finally, overwrite old `latestState` with the new import snapshot
+    updatedValue.history.latestState = structuredClone(newLatest);
+
+    return updatedValue;
+  });
 }
 
-// Implement the history tracking logic
 
-/**
- * Subscribe to the store; this callback fires whenever userDataStore changes.
- */
-userDataStore.subscribe((value) => {
-  if (!value.history) return;
+// Only set up the subscription if we're in the browser
+if (browser) {
+  let isUpdating = false;
 
-  if (!value.history.latestState) {
-    value.history.latestState = {
-      userId: value.userId,
-      profile: value.profile,
-      followers: value.followers ?? [],
-      following: value.following ?? []
-    };
+  userDataStore.subscribe((currentValue) => {
+    // Prevent recursive updates
+    if (isUpdating || !currentValue) return;
 
-    // Update the store with this initial "latestState"
-    userDataStore.set(value);
-    return;
-  }
+    try {
+      isUpdating = true;
+      const updatedValue = structuredClone(currentValue);
 
-  // We do have a latestState, so let's calculate changes
-  const currentFollowers = value.followers ?? [];
-  const currentFollowing = value.following ?? [];
+      const currentFollowers = updatedValue.followers ?? [];
+      const currentFollowing = updatedValue.following ?? [];
 
-  const latestFollowers = value.history.latestState.followers ?? [];
-  const latestFollowing = value.history.latestState.following ?? [];
+      // Recalculate helper arrays
+      updatedValue.notFollowingMeBack = currentFollowers.filter(
+        (follower) => !currentFollowing.some((f) => f.id === follower.id)
+      );
+      updatedValue.iDontFollowBack = currentFollowing.filter(
+        (following) => !currentFollowers.some((f) => f.id === following.id)
+      );
 
-  const new_followers = findDifferences(currentFollowers, latestFollowers);
-  const unfollowers = findDifferences(latestFollowers, currentFollowers);
+      // Update currentDiff by comparing top-level data to history.latestState
+      if (updatedValue.history?.latestState) {
+        const latestState = updatedValue.history.latestState;
 
-  const new_following = findDifferences(currentFollowing, latestFollowing);
-  const i_unfollowed = findDifferences(latestFollowing, currentFollowing);
+        const newFollowers = findDifferences(currentFollowers, latestState.followers ?? []);
+        const unfollowers = findDifferences(latestState.followers ?? [], currentFollowers);
+        const newFollowing = findDifferences(currentFollowing, latestState.following ?? []);
+        const iUnfollowed = findDifferences(latestState.following ?? [], currentFollowing);
+        const profileDiff = diffProfile(updatedValue.profile, latestState.profile);
 
-  // You could optionally bail out if nothing changed:
-  // if (
-  //   !new_followers.length &&
-  //   !unfollowers.length &&
-  //   !new_following.length &&
-  //   !i_unfollowed.length
-  // ) {
-  //   return;
-  // }
+        const currentDiff: Record<string, unknown> = {};
+        if (profileDiff) {
+          currentDiff.profile = profileDiff;
+        }
+        if (newFollowers.length) {
+          currentDiff.newFollowers = newFollowers;
+        }
+        if (unfollowers.length) {
+          currentDiff.unfollowers = unfollowers;
+        }
+        if (newFollowing.length) {
+          currentDiff.newFollowing = newFollowing;
+        }
+        if (iUnfollowed.length) {
+          currentDiff.iUnfollowed = iUnfollowed;
+        }
 
-  // Create a new record describing these changes
-  const newHistoryRecord = {
-    new_followers,
-    unfollowers,
-    i_unfollowed,
-    new_following,
-    timestamp: new Date()
-  };
+        // Compare to existing updatedValue.currentDiff
+        const oldCurrentDiffStr = JSON.stringify(updatedValue.currentDiff);
+        const newCurrentDiffStr = JSON.stringify(currentDiff);
 
-  // Ensure we have a records array
-  value.history.records = value.history.records ?? [];
-  value.history.records.push(newHistoryRecord);
+        // Only update if it changed
+        if (newCurrentDiffStr !== oldCurrentDiffStr) {
+          updatedValue.currentDiff =
+            Object.keys(currentDiff).length > 0 ? currentDiff : undefined;
+        }
+      }
 
-  // Update the latestState to the new "current" data
-  value.history.latestState = {
-    userId: value.userId,
-    profile: value.profile,
-    followers: [...currentFollowers],
-    following: [...currentFollowing]
-  };
-
-  // Finally, set the store so the new `history` and `latestState`
-  // are recognized by Svelte (and possibly trigger another update).
-  userDataStore.set(value);
-
-  console.log("User history updated", value.history);
-});
-
-// function compareFollowers() {
-//   if (!previousData?.followers || !$userDataStore.followers) return;
-
-//   unfollowers = previousData.followers.filter(
-//     (prevFollower) => !$userDataStore.followers?.some((currentFollower) => currentFollower.id === prevFollower.id)
-//   );
-
-//   newFollowers = $userDataStore.followers.filter(
-//     (currentFollower) => !previousData?.followers.some((prevFollower) => prevFollower.id === currentFollower.id)
-//   );
-// }
+      // Only update the store if something changed
+      if (JSON.stringify(currentValue) !== JSON.stringify(updatedValue)) {
+        userDataStore.set(updatedValue);
+      }
+    } finally {
+      isUpdating = false;
+    }
+  });
+}

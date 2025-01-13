@@ -26,6 +26,7 @@
 				}`}
 			>
 				{tab.name}
+				{#if tab.count}({tab.count}){/if}
 			</button>
 		</li>
 	{/each}

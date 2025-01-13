@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import UserDisplayMain from '$lib/components/userDisplayMain.svelte';
 	import Button from '$lib/components/button.svelte';
-	import ExportFollowersButton from '$lib/components/export_followers_button.svelte';
+	import ExportFollowersButton from '$lib/components/exportFollowersButton.svelte';
 	import ProgressBar from '$lib/components/progress_bar.svelte';
 	import type { IGUserProfile } from '$lib/types/instagramTypes';
 
@@ -13,14 +13,18 @@
 	import TabsVertical from '$lib/components/misc/tabsVertical.svelte';
 	import { userDataStore } from '$lib/stores/userDataStore';
 	import { page } from '$app/state';
-	import { pageTabs } from '$lib/data';
 	import ImportFollowersButton from '$lib/components/importFollowersButton.svelte';
 	import UserList from '$lib/components/userList.svelte';
-	import { activeTabId } from '$lib/stores/tabStore';
+	import { activeTabId, pageTabs } from '$lib/stores/tabStore';
 	import IcRoundFileDownload from '~icons/ic/round-file-download';
 	import ThemeButton from '$lib/components/misc/themeButton.svelte';
 	import FullscreenButton from '$lib/components/misc/fullscreenButton.svelte';
 	import { get } from 'svelte/store';
+	import { mapUserDataToTabData } from '$lib/utils/app';
+	import { browser } from '$app/environment';
+	import { TabId } from '$lib/types/appTypes';
+	import { getIDontFollowBack, getNotFollowingMeBack } from '$lib/utils/followers';
+	import type { UserData } from '$lib/types/userTypes';
 
 	let params = $derived(new URL(page.url).searchParams);
 
@@ -36,6 +40,12 @@
 			// If you need the currentTab info for something
 			// let currentTab = tabs[0];
 		});
+	});
+
+	userDataStore.subscribe((e) => {
+		if (!browser) return;
+		console.log('userDataStore updated:', e);
+		mapUserDataToTabData(e, pageTabs);
 	});
 
 	async function handleURLChange() {
@@ -129,6 +139,35 @@
 			loadingFollowers = false;
 		}
 	}
+
+	function getUsers(activeTabId: TabId, userData: UserData) {
+		if (activeTabId === TabId.FOLLOWERS) {
+			return userData.followers || [];
+		}
+		if (activeTabId === TabId.FOLLOWING) {
+			return userData.following || [];
+		}
+		if (activeTabId === TabId.NOT_FOLLOWING_ME_BACK && userData.following && userData.followers) {
+			return getNotFollowingMeBack(userData.following, userData.followers) || [];
+		}
+		if (activeTabId === TabId.I_DONT_FOLLOW_BACK && userData.following && userData.followers) {
+			return getIDontFollowBack(userData.following, userData.followers) || [];
+		}
+		if (activeTabId === TabId.UNFOLLOWERS) {
+			return userData.currentDiff?.unfollowers || [];
+		}
+		if (activeTabId === TabId.NEW_FOLLOWERS) {
+			return userData.currentDiff?.newFollowers || [];
+		}
+		if (activeTabId === TabId.I_UNFOLLOWED) {
+			return userData.currentDiff?.iUnfollowed || [];
+		}
+		if (activeTabId === TabId.NEW_FOLLOWING) {
+			return userData.currentDiff?.newFollowing || [];
+		}
+
+		return [];
+	}
 </script>
 
 <div
@@ -149,13 +188,12 @@
 
 	<!-- Content -->
 	<div class="flex min-h-0 grow items-stretch">
-		<!-- Key: min-h-0 on flex parent -->
 		<div
 			class="flex flex-col items-center justify-between border-r border-neutral-200 py-2 pr-2 text-base dark:border-neutral-600 max-sm:text-xs sm:py-4"
 		>
 			<!-- Left panel content -->
 			<div class="flex items-start">
-				<TabsVertical tabs={pageTabs} />
+				<TabsVertical tabs={$pageTabs} />
 			</div>
 			<div class="mt-10 flex flex-col items-center justify-center gap-2">
 				<ImportFollowersButton />
@@ -170,7 +208,6 @@
 
 		<!-- Right side -->
 		<div class="flex min-h-0 grow flex-col">
-			<!-- Another min-h-0 for nested flex -->
 			{#if $userDataStore.userId && !$userDataStore.followers && !$userDataStore.following}
 				<div class="flex items-center justify-center">
 					<Button
@@ -191,11 +228,7 @@
 					<ProgressBar {progress} />
 				{/if}
 			{:else}
-				<UserList
-					followers={$userDataStore.followers}
-					following={$userDataStore.following}
-					filterByTab={$activeTabId}
-				/>
+				<UserList users={getUsers($activeTabId, $userDataStore)} />
 			{/if}
 		</div>
 	</div>

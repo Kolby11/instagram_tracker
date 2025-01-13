@@ -4,8 +4,7 @@
 	import { onMount } from 'svelte';
 	import { importFile } from '$lib/utils/import';
 	import IcRoundFileUpload from '~icons/ic/round-file-upload';
-	import { userDataStore } from '$lib/stores/userDataStore';
-	import { importDataIntoUserState } from '$lib/utils/users';
+	import { importDataIntoUserStore, userDataStore } from '$lib/stores/userDataStore';
 
 	type ButtonProps = HTMLButtonAttributes;
 
@@ -20,7 +19,11 @@
 		const file = target.files[0];
 		try {
 			const parsedData = await importFile(file);
-			importDataIntoUserState(userDataStore, parsedData);
+			if (!parsedData) {
+				console.error('Error parsing file:', file);
+				return;
+			}
+			importDataIntoUserStore(userDataStore, parsedData);
 			console.log('Parsed Data:', parsedData);
 		} catch (error) {
 			console.error('Error importing file:', error);
@@ -60,5 +63,5 @@
 		<p>Import data</p>
 	</div>
 
-	<input type="file" accept=".json" style="display: none" bind:this={inputRef} onchange={handleFileChange} />
+	<input type="file" accept=".json,.yml,.yaml" style="display: none" bind:this={inputRef} onchange={handleFileChange} />
 </Button>
