@@ -1,11 +1,176 @@
 import type { ExportData } from "$lib/types/exportTypes";
-import type { UserData } from "$lib/types/userTypes";
-import { writable, type Writable } from "svelte/store";
+import type { UserData, UserPreview } from "$lib/types/userTypes";
+import { derived, get, writable, type Writable } from "svelte/store";
 import { browser } from "$app/environment";
-import { diffProfile, findDifferences } from "$lib/utils/users";
+import { diffProfile, findDifferences, parseIgUserPreviews, parseIgUserProfile } from "$lib/utils/users";
+import { MAX_FETCHABLE_COUNT, MAX_STORED_USERS } from "$lib/data";
+import { fetchFollowers, fetchFollowing, fetchUserProfile } from "$lib/utils/instagramApi";
 
-// Initialize store with default empty state
+// Initialize stores
 export const userDataStore: Writable<UserData> = writable({});
+export const loadingStateStore = writable({
+  isLoading: false,
+  followersProgress: 0,
+  followingProgress: 0,
+  error: null as string | null,
+  limitations: {
+    followersExceeded: false,
+    followingExceeded: false
+  }
+});
+
+export const totalProgressStore = derived(
+  loadingStateStore,
+  $state => Math.floor(($state.followersProgress + $state.followingProgress) / 2)
+);
+
+function updateProgress(type: 'followers' | 'following', progress: number) {
+  loadingStateStore.update(state => ({
+    ...state,
+    [`${type}Progress`]: progress * 100
+  }));
+}
+
+export async function fetchUserData(userId: number): Promise<void> {
+  loadingStateStore.set({
+    isLoading: true,
+    followersProgress: 0,
+    followingProgress: 0,
+    error: null,
+    limitations: {
+      followersExceeded: false,
+      followingExceeded: false
+    }
+  });
+
+  try {
+    // Fetch user profile first
+    const userProfile = await fetchUserProfile(userId);
+    if (!userProfile) {
+      throw new Error('Failed to fetch user profile');
+    }
+
+    // Check follower/following counts
+    const followersCount = userProfile.follower_count;
+    const followingCount = userProfile.following_count;
+    
+    const limitations = {
+      followersExceeded: followersCount > MAX_FETCHABLE_COUNT,
+      followingExceeded: followingCount > MAX_FETCHABLE_COUNT
+    };
+
+    // Update limitations in store
+    loadingStateStore.update(state => ({
+      ...state,
+      limitations
+    }));
+
+    // Update user profile in store
+    userDataStore.update(state => ({
+      ...state,
+      userId,
+      profile: parseIgUserProfile(userProfile)
+    }));
+
+    // If both exceed limits, throw error
+    if (limitations.followersExceeded && limitations.followingExceeded) {
+      throw new Error(
+        `This account has too many connections (${followersCount.toLocaleString()} followers, ${followingCount.toLocaleString()} following). To prevent excessive requests, we can only analyze accounts with fewer than ${MAX_FETCHABLE_COUNT.toLocaleString()} followers and following.`
+      );
+    }
+
+    // Fetch only what's within limits
+    let followers: UserPreview[] = [];
+    let following: UserPreview[] = [];
+    
+    if (!limitations.followersExceeded) {
+      const followerData = await fetchFollowers(userId, (current, total) => {
+        const progress = total > 0 ? (current / total) : 0;
+        updateProgress('followers', progress);
+      });
+      followers = parseIgUserPreviews(followerData);
+    } else {
+      updateProgress('followers', 1); // Mark as complete
+    }
+
+    if (!limitations.followingExceeded) {
+      const followingData = await fetchFollowing(userId, (current, total) => {
+        const progress = total > 0 ? (current / total) : 0;
+        updateProgress('following', progress);
+      });
+      following = parseIgUserPreviews(followingData);
+    } else {
+      updateProgress('following', 1); // Mark as complete
+    }
+
+    // Update store with fetched data
+    userDataStore.update(state => ({
+      ...state,
+      followers,
+      following
+    }));
+
+    // Update store with fetched data
+    userDataStore.update(state => ({
+      ...state,
+      followers,
+      following
+    }));
+
+    // Save to localStorage
+    if (browser) {
+      saveUserDataToLocalStorage(get(userDataStore));
+    }
+  } catch (error) {
+    loadingStateStore.update(state => ({
+      ...state,
+      error: error instanceof Error ? error.message : 'An unknown error occurred'
+    }));
+  } finally {
+    loadingStateStore.update(state => ({
+      ...state,
+      isLoading: false,
+      followersProgress: 100,
+      followingProgress: 100
+    }));
+  }
+}
+export function saveUserDataToLocalStorage(userData: UserData): void {
+  if (!browser || !userData.userId) return;
+
+  const savedUserIdsLocal = localStorage.getItem("savedUserIds");
+  const savedUserIds: string[] = savedUserIdsLocal ? JSON.parse(savedUserIdsLocal) : [];
+  
+  // Save the current user data
+  localStorage.setItem(userData.userId.toString(), JSON.stringify(userData));
+  
+  // If user already exists in the list, remove it (to move it to front later)
+  const existingIndex = savedUserIds.indexOf(userData.userId.toString());
+  if (existingIndex !== -1) {
+    savedUserIds.splice(existingIndex, 1);
+  }
+  
+  // Add new userId to the front of the list
+  savedUserIds.unshift(userData.userId.toString());
+  
+  // If we exceed MAX_STORED_USERS, remove the oldest entry
+  if (savedUserIds.length > MAX_STORED_USERS) {
+    const oldestUserId = savedUserIds.pop();
+    if (oldestUserId) {
+      localStorage.removeItem(oldestUserId);
+    }
+  }
+  
+  // Update the saved user IDs list
+  localStorage.setItem("savedUserIds", JSON.stringify(savedUserIds));
+}
+
+export function loadUserDataFromLocalStorage(userId: number): void {
+  if (!browser) return;
+
+  const userData = localStorage.getItem(userId.toString());
+  userDataStore.set(userData ? JSON.parse(userData) : {});
+}
 
 /**
  * importDataIntoUserStore
@@ -150,6 +315,8 @@ if (browser) {
       // Only update the store if something changed
       if (JSON.stringify(currentValue) !== JSON.stringify(updatedValue)) {
         userDataStore.set(updatedValue);
+        // Save to local storage
+        saveUserDataToLocalStorage(updatedValue);
       }
     } finally {
       isUpdating = false;

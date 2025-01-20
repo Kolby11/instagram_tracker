@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { HTMLLiAttributes } from 'svelte/elements';
-	import { onMount } from 'svelte';
+	import IcBaselineVerified from '~icons/ic/baseline-verified';
 	import type { UserPreview } from '$lib/types/userTypes';
 
 	type UserListItem = { user: UserPreview } & HTMLLiAttributes;
@@ -43,9 +43,9 @@
 
 <li class="flex items-center justify-start gap-x-1" {...props}>
 	<!-- svelte-ignore a11y_img_redundant_alt -->
-	<img src={loadedImageUrl || user?.profilePicURL} alt="Profile Picture" class="size-4 rounded-full sm:size-8" />
+	<img src={loadedImageUrl} alt="Profile Picture" class="size-4 rounded-full sm:size-8" />
 	<p>{user.username}</p>
 	{#if user.isVerified}
-		<img src={chrome.runtime.getURL('img/verified.svg')} alt="Verified" />
+		<IcBaselineVerified color="#0095F6" class="h-3 w-3" />
 	{/if}
 </li>

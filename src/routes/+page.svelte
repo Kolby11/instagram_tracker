@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import UserDisplayMain from '$lib/components/userDisplayMain.svelte';
-	import Button from '$lib/components/button.svelte';
-	import ExportFollowersButton from '$lib/components/exportFollowersButton.svelte';
-	import ProgressBar from '$lib/components/progress_bar.svelte';
-	import type { IGUserProfile } from '$lib/types/instagramTypes';
-
-	// Utility functions & state
-	import { getUserId, fetchUserProfile, fetchFollowers, fetchFollowing } from '$lib/utils/instagramApi';
-	import { parseIgUserProfile, parseIgUserPreviews } from '$lib/utils/users';
+	import ProgressBar from '$lib/components/progressBar.svelte';
+	import { getUserId } from '$lib/utils/instagramApi';
 	import { getUsernameFromURL } from '$lib/utils/browser';
 	import TabsVertical from '$lib/components/misc/tabsVertical.svelte';
-	import { userDataStore } from '$lib/stores/userDataStore';
+	import {
+		fetchUserData,
+		loadUserDataFromLocalStorage,
+		userDataStore,
+		loadingStateStore,
+		totalProgressStore
+	} from '$lib/stores/userDataStore';
 	import { page } from '$app/state';
 	import ImportFollowersButton from '$lib/components/importFollowersButton.svelte';
 	import UserList from '$lib/components/userList.svelte';
@@ -19,124 +19,75 @@
 	import IcRoundFileDownload from '~icons/ic/round-file-download';
 	import ThemeButton from '$lib/components/misc/themeButton.svelte';
 	import FullscreenButton from '$lib/components/misc/fullscreenButton.svelte';
-	import { get } from 'svelte/store';
 	import { mapUserDataToTabData } from '$lib/utils/app';
 	import { browser } from '$app/environment';
 	import { TabId } from '$lib/types/appTypes';
 	import { getIDontFollowBack, getNotFollowingMeBack } from '$lib/utils/followers';
 	import type { UserData } from '$lib/types/userTypes';
+	import ExportFollowersButton from '$lib/components/exportFollowersButton.svelte';
 
 	let params = $derived(new URL(page.url).searchParams);
-
-	let loadingFollowers = false;
-	let loadFollowersError = false;
-	let progress = 0;
-
-	let userProfile: IGUserProfile | undefined = $state();
+	let currentUsername = '';
 
 	onMount(async () => {
 		await handleURLChange();
-		chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-			// If you need the currentTab info for something
-			// let currentTab = tabs[0];
+
+		// Listen for URL changes in the active tab
+		chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+			// Only handle updates for the active tab and when URL changes
+			if (changeInfo.url) {
+				const currentTab = await getCurrentTab();
+				if (currentTab?.id === tabId) {
+					await handleURLChange();
+				}
+			}
+		});
+
+		// Handle tab activation changes
+		chrome.tabs.onActivated.addListener(async (activeInfo) => {
+			await handleURLChange();
 		});
 	});
 
+	async function getCurrentTab() {
+		return new Promise<chrome.tabs.Tab>((resolve) => {
+			chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+				resolve(tabs[0]);
+			});
+		});
+	}
+
 	userDataStore.subscribe((e) => {
 		if (!browser) return;
-		console.log('userDataStore updated:', e);
 		mapUserDataToTabData(e, pageTabs);
 	});
 
 	async function handleURLChange() {
 		const newUsername = (await getUsernameFromURL()) || params.get('username') || '';
-		console.log('Username:', newUsername);
 		if (!newUsername) return;
 
+		// Check if the username has not changed return
+		if (newUsername === currentUsername) return;
+
 		const newUserId = await getUserId(newUsername);
-		console.log('UserId:', newUserId);
+		currentUsername = newUsername;
 
-		/**
-		 * 1) Update the store for username & userId
-		 *    We'll do this immediately, so that the store reflects
-		 *    at least the new ID even before we fetch the profile.
-		 */
-		userDataStore.update((state) => {
-			// If there's no profile or the username changed, set it
-			if (!state.profile || state.profile.username !== newUsername) {
-				state.profile = { username: newUsername };
-			}
-			state.userId = newUserId;
-			return state;
-		});
+		// Load from localStorage first
+		loadUserDataFromLocalStorage(newUserId);
 
-		/**
-		 * 2) If we have a valid newUserId, fetch the profile.
-		 *    Then update the store with the returned data.
-		 */
-		if (newUserId) {
-			const userProfile = await fetchUserProfile(newUserId);
-			if (userProfile) {
-				userDataStore.update((state) => {
-					// Parse the newly fetched data into your preferred shape
-					state.profile = parseIgUserProfile(userProfile);
-					return state;
-				});
-			}
-			console.log('Fetched userProfile:', get(userDataStore).profile);
-			console.log('Fetched userProfile (raw):', userProfile);
-		}
-	}
+		// Check if we need to fetch fresh data
+		const currentData = $userDataStore;
+		const needsFreshData =
+			!currentData.profile ||
+			currentData.profile.username !== newUsername ||
+			!currentData.followers ||
+			!currentData.following;
 
-	// The main analysis function
-	async function analyzeFollowers() {
-		if (loadingFollowers || !$userDataStore.userId) return;
-
-		loadingFollowers = true;
-		loadFollowersError = false;
-		progress = 0;
-
-		try {
-			let followersProgress = 0;
-			let followingProgress = 0;
-
-			// Fetch followers & following in parallel
-			const [followers, following] = await Promise.all([
-				fetchFollowers($userDataStore.userId, (currentProgress) => {
-					followersProgress = currentProgress * 100;
-					progress = Math.floor((followersProgress + followingProgress) / 2);
-				}),
-				fetchFollowing($userDataStore.userId, (currentProgress) => {
-					followingProgress = currentProgress * 100;
-					progress = Math.floor((followersProgress + followingProgress) / 2);
-				})
-			]);
-
-			// Once both are done
-			progress = 100;
-
-			// parseIgUserPreviews is your utility
-			const parsedFollowers = parseIgUserPreviews(followers);
-			const parsedFollowing = parseIgUserPreviews(following);
-
-			if (!parsedFollowers || !parsedFollowing) {
-				loadFollowersError = true;
-				return;
-			}
-
-			// Save in $userDataStore
-			userDataStore.update((e) => {
-				return {
-					...e,
-					followers: parsedFollowers,
-					following: parsedFollowing
-				};
-			});
-		} catch (error) {
-			console.error('Error in analyzeFollowers:', error);
-			loadFollowersError = true;
-		} finally {
-			loadingFollowers = false;
+		if (needsFreshData) {
+			console.log('Fetching fresh data for:', newUsername);
+			await fetchUserData(newUserId);
+		} else {
+			console.log('Using cached data for:', newUsername);
 		}
 	}
 
@@ -167,6 +118,18 @@
 		}
 
 		return [];
+	}
+
+	// Helper function to check if account is private
+	function isPrivateAccount(userData: UserData): boolean {
+		return Boolean(
+			userData.profile &&
+				userData.profile.isPrivate &&
+				(!userData.followers || userData.followers.length === 0) &&
+				(!userData.following || userData.following.length === 0) &&
+				((userData.profile.followerCount && userData.profile.followerCount > 0) ||
+					(userData.profile.followingCount && userData.profile.followingCount > 0))
+		);
 	}
 </script>
 
@@ -207,28 +170,45 @@
 		</div>
 
 		<!-- Right side -->
-		<div class="flex min-h-0 grow flex-col">
-			{#if $userDataStore.userId && !$userDataStore.followers && !$userDataStore.following}
-				<div class="flex items-center justify-center">
-					<Button
-						loading={loadingFollowers}
-						error={loadFollowersError}
-						aria-label="Analyze followers and following"
-						onclick={analyzeFollowers}
-					>
-						{#if loadingFollowers}
-							Loading...
-						{:else}
-							Analyze Followers
-						{/if}
-					</Button>
-				</div>
+		<div class="flex min-h-0 grow flex-col items-center justify-center max-sm:max-w-56">
+			{#if $userDataStore.userId}
+				{#if $loadingStateStore.isLoading}
+					<div class="flex flex-col items-center justify-center space-y-4 p-4">
+						<p class="text-center text-sm text-neutral-600 dark:text-neutral-400">Loading user data...</p>
+						<ProgressBar progress={$totalProgressStore} />
 
-				{#if loadingFollowers}
-					<ProgressBar {progress} />
+						{#if $loadingStateStore.limitations.followersExceeded || $loadingStateStore.limitations.followingExceeded}
+							<div class="mt-4 rounded-md bg-yellow-50 p-4 dark:bg-yellow-900/20">
+								<p class="text-sm text-yellow-700 dark:text-yellow-200">
+									{#if $loadingStateStore.limitations.followersExceeded && $loadingStateStore.limitations.followingExceeded}
+										This account has too many connections to analyze. We can only analyze accounts with fewer than 2,000
+										followers and following.
+									{:else if $loadingStateStore.limitations.followersExceeded}
+										This account has too many followers to analyze (>2,000). Only following data will be fetched.
+									{:else}
+										This account follows too many users to analyze (>2,000). Only follower data will be fetched.
+									{/if}
+								</p>
+							</div>
+						{/if}
+					</div>
+				{:else if isPrivateAccount($userDataStore)}
+					<div class="flex flex-col items-center justify-center p-8 text-center">
+						<p class="mb-2 text-lg font-medium">Private Account</p>
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">
+							This account is private. You need to follow this account to view their followers and following.
+						</p>
+					</div>
+				{:else if $loadingStateStore.error}
+					<div class="flex flex-col items-center justify-center p-8 text-center">
+						<p class="mb-2 text-lg font-medium text-red-600">Error Loading Data</p>
+						<p class="text-sm text-neutral-600 dark:text-neutral-400">
+							{$loadingStateStore.error}
+						</p>
+					</div>
+				{:else}
+					<UserList users={getUsers($activeTabId, $userDataStore)} />
 				{/if}
-			{:else}
-				<UserList users={getUsers($activeTabId, $userDataStore)} />
 			{/if}
 		</div>
 	</div>

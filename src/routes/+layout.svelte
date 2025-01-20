@@ -10,9 +10,7 @@
 	onMount(() => {
 		// Initialize theme
 		if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-			console.log('Checking theme');
 			chrome.runtime.sendMessage({ type: 'getTheme' }, (response) => {
-				console.log('Got theme:', response.theme);
 				setTheme(response.theme);
 			});
 		} else {

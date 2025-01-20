@@ -14,6 +14,8 @@ export type UserProfile = {
 	bio?: string;
 	followerCount?: number;
 	followingCount?: number;
+	isPrivate?: boolean;
+	isVerified?: boolean;
 }
 
 export type UserData = {

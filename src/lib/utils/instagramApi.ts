@@ -1,3 +1,4 @@
+import { FETCH_FOLLOWERS_BATCH_SIZE, FETCH_FOLLOWING_BATCH_SIZE } from '$lib/data';
 import type { IgUserPreview, IGUserProfileResponse, IGUserProfile } from '$lib/types/instagramTypes';
 
 const QUERY_HASH_FOLLOWERS = 'c76146de99bb02f6415203be841dd25a';
@@ -61,23 +62,23 @@ export async function fetchUserProfile(userId: number): Promise<IGUserProfile | 
 }
 
 /**
- * Fetch followers with pagination (50 per batch)
+ * Fetch followers with pagination and accurate progress
  */
 export async function fetchFollowers(
 	userId: number,
-	progressCallback?: (progress: number) => void
+	progressCallback?: (current: number, total: number) => void
 ): Promise<IgUserPreview[]> {
 	const followers: IgUserPreview[] = [];
 	let after: string | null = null;
 	let hasNext = true;
-	let batchCount = 0;
+	let totalCount: number | null = null;
 
 	while (hasNext) {
 		const variables = {
 			id: userId,
 			include_reel: true,
 			fetch_mutual: true,
-			first: 50,
+			first: FETCH_FOLLOWERS_BATCH_SIZE,
 			after: after
 		};
 
@@ -92,12 +93,18 @@ export async function fetchFollowers(
 			}
 
 			const data = await response.json();
-			const edges = data.data.user.edge_followed_by.edges;
+			const edgeFollowedBy = data.data.user.edge_followed_by;
+			
+			// Get total count from the first response
+			if (totalCount === null) {
+				totalCount = edgeFollowedBy.count;
+			}
 
-			hasNext = data.data.user.edge_followed_by.page_info.has_next_page;
-			after = data.data.user.edge_followed_by.page_info.end_cursor;
+			const edges = edgeFollowedBy.edges;
+			hasNext = edgeFollowedBy.page_info.has_next_page;
+			after = edgeFollowedBy.page_info.end_cursor;
 
-			const newFollowers = edges.map(({ node }: {node: IGUserProfile}) => ({
+			const newFollowers = edges.map(({ node }: { node: IGUserProfile }) => ({
 				id: node.id,
 				username: node.username,
 				full_name: node.full_name,
@@ -106,11 +113,10 @@ export async function fetchFollowers(
 			}));
 
 			followers.push(...newFollowers);
-			batchCount++;
 
-			// Update progress with batch count
-			if (progressCallback) {
-				progressCallback(batchCount);
+			// Update progress based on current followers count and total
+			if (progressCallback && totalCount) {
+				progressCallback(followers.length, totalCount);
 			}
 		} catch (error) {
 			console.error('Error fetching followers:', error);
@@ -118,28 +124,27 @@ export async function fetchFollowers(
 		}
 	}
 
-	console.log('[fetchFollowers] Total followers:', followers.length);
 	return followers;
 }
 
 /**
- * Fetch following with pagination (50 per batch)
+ * Fetch following with pagination and accurate progress
  */
 export async function fetchFollowing(
 	userId: number,
-	progressCallback?: (progress: number) => void
+	progressCallback?: (current: number, total: number) => void
 ): Promise<IgUserPreview[]> {
 	const following: IgUserPreview[] = [];
 	let after: string | null = null;
 	let hasNext = true;
-	let batchCount = 0;
+	let totalCount: number | null = null;
 
 	while (hasNext) {
 		const variables = {
 			id: userId,
 			include_reel: true,
 			fetch_mutual: true,
-			first: 50,
+			first: FETCH_FOLLOWING_BATCH_SIZE,
 			after: after
 		};
 
@@ -154,12 +159,18 @@ export async function fetchFollowing(
 			}
 
 			const data = await response.json();
-			const edges = data.data.user.edge_follow.edges;
+			const edgeFollow = data.data.user.edge_follow;
+			
+			// Get total count from the first response
+			if (totalCount === null) {
+				totalCount = edgeFollow.count;
+			}
 
-			hasNext = data.data.user.edge_follow.page_info.has_next_page;
-			after = data.data.user.edge_follow.page_info.end_cursor;
+			const edges = edgeFollow.edges;
+			hasNext = edgeFollow.page_info.has_next_page;
+			after = edgeFollow.page_info.end_cursor;
 
-			const newFollowing = edges.map(({ node }: {node: IGUserProfile}) => ({
+			const newFollowing = edges.map(({ node }: { node: IGUserProfile }) => ({
 				id: node.id,
 				username: node.username,
 				full_name: node.full_name,
@@ -168,11 +179,10 @@ export async function fetchFollowing(
 			}));
 
 			following.push(...newFollowing);
-			batchCount++;
 
-			// Update progress with batch count
-			if (progressCallback) {
-				progressCallback(batchCount);
+			// Update progress based on current following count and total
+			if (progressCallback && totalCount) {
+				progressCallback(following.length, totalCount);
 			}
 		} catch (error) {
 			console.error('Error fetching following:', error);
@@ -180,6 +190,5 @@ export async function fetchFollowing(
 		}
 	}
 
-	console.log('[fetchFollowing] Total following:', following.length);
 	return following;
 }

@@ -24,7 +24,6 @@
 				return;
 			}
 			importDataIntoUserStore(userDataStore, parsedData);
-			console.log('Parsed Data:', parsedData);
 		} catch (error) {
 			console.error('Error importing file:', error);
 		}

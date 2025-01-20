@@ -20,7 +20,9 @@ export function parseIgUserProfile(user: IGUserProfile): UserProfile {
 			profilePicUrl: user.profile_pic_url,
 			bio: user.biography,
 			followerCount: user.follower_count,
-			followingCount: user.following_count
+			followingCount: user.following_count,
+			isPrivate: user.is_private,
+			isVerified: user.is_verified
 	};
 }
 
