@@ -8,26 +8,11 @@
 		"default_icon": "instagram_tracker.png"
 	},
 	"permissions": ["activeTab", "webRequest", "downloads", "storage"],
-	"host_permissions": ["*://*.instagram.com/*", "*://*.cdninstagram.com/*"],
+	"host_permissions": ["<all_urls>"],
 	"background": {
 		"service_worker": "background.js"
 	},
-	"web_accessible_resources": [
-		{
-			"resources": ["*"],
-			"matches": ["<all_urls>"]
-		},
-		{
-			"resources": ["/img/*"],
-			"matches": ["<all_urls>"],
-			"use_dynamic_url": true
-		},
-		{
-			"resources": ["*"],
-			"matches": ["*://*.cdninstagram.com/*"]
-		}
-	],
 	"content_security_policy": {
-		"extension_pages": "script-src 'self'; img-src * data: blob:;"
+		"extension_pages": "script-src 'self'; img-src * data: blob: https://*.fbcdn.net https://*.cdninstagram.com https://*.instagram.com;"
 	}
 }
