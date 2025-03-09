@@ -19,6 +19,9 @@ export type UserProfile = {
 }
 
 export type UserData = {
+	appMetadata?: {
+		latestDataRefresh?: Date;
+	};
 	userId?: number;
 	profile?: UserProfile;
 	followers?: UserPreview[];

@@ -55,10 +55,10 @@
 <Button
 	{...props}
 	onclick={triggerFilePicker}
-	class="border-2 border-dashed border-gray-300 bg-transparent dark:text-neutral-100 dark:hover:bg-neutral-200"
+	class="border-2 border-dashed border-gray-600 bg-transparent text-gray-600 hover:border-gray-700 hover:bg-transparent hover:text-gray-700 dark:border-neutral-300 dark:text-neutral-200 dark:hover:border-neutral-400"
 >
 	<div class="flex items-center justify-center gap-2">
-		<IcRoundFileUpload aria-label="Import data" class="size-4 sm:size-6" />
+		<IcRoundFileUpload aria-label="Import data" class="size-4 text-gray-600 dark:text-neutral-200 sm:size-6" />
 		<p>Import data</p>
 	</div>
 

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import { initializeTheme, setTheme } from '$lib/stores/themeStore';
+	import { appSettings, loadAppSettings, saveAppSettings } from '$lib/stores/appSettingsStore';
 
 	let { children } = $props();
 	let environment: string;
@@ -16,6 +17,7 @@
 		} else {
 			initializeTheme();
 		}
+		loadAppSettings();
 
 		// Check if running as extension
 		if (window.chrome && chrome.runtime && chrome.runtime.id) {

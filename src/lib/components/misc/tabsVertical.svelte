@@ -20,9 +20,9 @@
 				class={`block w-full rounded-r-lg px-6 py-4 text-left font-semibold transition max-sm:px-4 max-sm:py-2 ${
 					$activeTabId === tab.id
 						? // Active tab styles (notice no extra bolding)
-							'bg-violet-400 text-violet-900 dark:bg-violet-700 dark:text-white'
+							'bg-violet-400 text-violet-950 dark:bg-violet-700 dark:text-white'
 						: // Inactive tab styles & hover states
-							'hover:bg-violet-300 hover:text-gray-600 dark:hover:bg-violet-600 dark:hover:text-white'
+							'hover:bg-violet-300 hover:text-gray-600 focus-visible:bg-violet-300 dark:hover:bg-violet-600 dark:hover:text-white dark:focus-visible:bg-violet-600 dark:focus-visible:text-white'
 				}`}
 			>
 				{tab.name}

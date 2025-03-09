@@ -35,7 +35,7 @@
 
 	const variantClasses = {
 		default: 'bg-gray-100 hover:bg-gray-200 text-gray-900',
-		primary: 'bg-blue-600 hover:bg-blue-700 text-white',
+		primary: 'bg-violet-400 hover:bg-violet-500 dark:bg-violet-700 hover:dark:bg-violet-800 text-white',
 		success: 'bg-green-600 hover:bg-green-700 text-white',
 		warning: 'bg-yellow-600 hover:bg-yellow-700 text-white',
 		error: 'bg-red-600 hover:bg-red-700 text-white'

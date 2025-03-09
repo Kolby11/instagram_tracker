@@ -1,3 +1,4 @@
+import { AppSettingInputTypes, type AppSettings } from "./types/appSettingTypes";
 import { TabId, type Tab } from "./types/appTypes";
 
 export const MAX_STORED_USERS = 3;
@@ -5,7 +6,26 @@ export const FETCH_FOLLOWERS_BATCH_SIZE = 50;
 export const FETCH_FOLLOWING_BATCH_SIZE = 50;
 export const MAX_FETCHABLE_COUNT = 2000;
 
-export const initialPageTabs: Tab[] = [
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+    automaticDataRefresh: {
+      title: 'Automatic Data Refresh',
+      tooltip: 'Automatically refresh data on app load after the specified interval',
+      value: true,
+      defaultValue: true,
+      componentType: AppSettingInputTypes.CHECKBOX,
+      componentProps: {}
+    },
+    refreshInterval: {
+      title: 'Refresh Interval',
+      tooltip: 'Days between automatic data refreshes',
+      value: 1,
+      defaultValue: 1,
+      componentType: AppSettingInputTypes.NUMBER,
+      componentProps: { unit: "days", min: 0, max: 365 },
+    }
+}
+
+export const INITIAL_PAGE_TABS: Tab[] = [
   { name: 'Followers', id: TabId.FOLLOWERS },
   { name: 'Following', id: TabId.FOLLOWING },
   { name: 'Not Following Me Back', id: TabId.NOT_FOLLOWING_ME_BACK },

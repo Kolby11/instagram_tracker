@@ -103,18 +103,13 @@ export async function fetchUserData(userId: number): Promise<void> {
       updateProgress('following', 1); // Mark as complete
     }
 
-    // Update store with fetched data
     userDataStore.update(state => ({
       ...state,
       followers,
-      following
-    }));
-
-    // Update store with fetched data
-    userDataStore.update(state => ({
-      ...state,
-      followers,
-      following
+      following,
+      appMetadata: {
+        latestDataRefresh: new Date()
+      },
     }));
 
     // Save to localStorage
@@ -172,12 +167,6 @@ export function loadUserDataFromLocalStorage(userId: number): void {
   userDataStore.set(userData ? JSON.parse(userData) : {});
 }
 
-/**
- * importDataIntoUserStore
- * Merges the provided ExportData (initialState, latestState, records, metadata)
- * into our store's UserData history. We no longer read top-level followers or profile
- * from `data`; we read them from `data.latestState` or `data.initialState`.
- */
 export function importDataIntoUserStore(
   userDataStore: Writable<UserData>,
   data: ExportData
@@ -243,7 +232,7 @@ export function importDataIntoUserStore(
       });
     }
 
-    // 5) Finally, overwrite old `latestState` with the new import snapshot
+    // 5) Overwrite old `latestState` with the new import snapshot
     updatedValue.history.latestState = structuredClone(newLatest);
 
     return updatedValue;
@@ -270,9 +259,11 @@ if (browser) {
       updatedValue.notFollowingMeBack = currentFollowers.filter(
         (follower) => !currentFollowing.some((f) => f.id === follower.id)
       );
+
       updatedValue.iDontFollowBack = currentFollowing.filter(
         (following) => !currentFollowers.some((f) => f.id === following.id)
       );
+
 
       // Update currentDiff by comparing top-level data to history.latestState
       if (updatedValue.history?.latestState) {

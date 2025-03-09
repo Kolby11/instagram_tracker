@@ -13,18 +13,19 @@
 		totalProgressStore
 	} from '$lib/stores/userDataStore';
 	import { page } from '$app/state';
-	import ImportFollowersButton from '$lib/components/importFollowersButton.svelte';
+	import ImportFollowersButton from '$lib/components/importDataButton.svelte';
 	import UserList from '$lib/components/userList.svelte';
 	import { activeTabId, pageTabs } from '$lib/stores/tabStore';
 	import IcRoundFileDownload from '~icons/ic/round-file-download';
-	import ThemeButton from '$lib/components/misc/themeButton.svelte';
-	import FullscreenButton from '$lib/components/misc/fullscreenButton.svelte';
 	import { mapUserDataToTabData } from '$lib/utils/app';
 	import { browser } from '$app/environment';
 	import { TabId } from '$lib/types/appTypes';
-	import { getIDontFollowBack, getNotFollowingMeBack } from '$lib/utils/followers';
 	import type { UserData } from '$lib/types/userTypes';
-	import ExportFollowersButton from '$lib/components/exportFollowersButton.svelte';
+	import ExportFollowersButton from '$lib/components/exportDataButton.svelte';
+	import Navbar from '$lib/components/misc/navbar.svelte';
+	import SettingsDrawer from '$lib/components/misc/settingsDrawer.svelte';
+	import { appSettings, settingsOpen } from '$lib/stores/appSettingsStore';
+	import { needsDataRefresh } from '$lib/utils/needsDataRefresh';
 
 	let params = $derived(new URL(page.url).searchParams);
 	let currentUsername = '';
@@ -75,19 +76,10 @@
 		// Load from localStorage first
 		loadUserDataFromLocalStorage(newUserId);
 
-		// Check if we need to fetch fresh data
-		const currentData = $userDataStore;
-		const needsFreshData =
-			!currentData.profile ||
-			currentData.profile.username !== newUsername ||
-			!currentData.followers ||
-			!currentData.following;
-
-		if (needsFreshData) {
-			console.log('Fetching fresh data for:', newUsername);
-			await fetchUserData(newUserId);
-		} else {
-			console.log('Using cached data for:', newUsername);
+		if ($appSettings.automaticDataRefresh) {
+			if (needsDataRefresh($userDataStore, newUsername, $appSettings.refreshInterval.value)) {
+				await fetchUserData(newUserId);
+			}
 		}
 	}
 
@@ -99,10 +91,10 @@
 			return userData.following || [];
 		}
 		if (activeTabId === TabId.NOT_FOLLOWING_ME_BACK && userData.following && userData.followers) {
-			return getNotFollowingMeBack(userData.following, userData.followers) || [];
+			return userData.notFollowingMeBack || [];
 		}
 		if (activeTabId === TabId.I_DONT_FOLLOW_BACK && userData.following && userData.followers) {
-			return getIDontFollowBack(userData.following, userData.followers) || [];
+			return userData.iDontFollowBack || [];
 		}
 		if (activeTabId === TabId.UNFOLLOWERS) {
 			return userData.currentDiff?.unfollowers || [];
@@ -134,82 +126,83 @@
 </script>
 
 <div
-	class="flex min-h-0 w-full min-w-96 flex-col bg-neutral-100 text-neutral-900 transition dark:bg-neutral-800 dark:text-neutral-100 sm:h-screen"
+	class="flex h-screen w-full min-w-96 grow flex-col bg-neutral-100 text-neutral-900 transition dark:bg-neutral-800 dark:text-neutral-100"
 >
 	<!-- Header -->
-	<div class="flex w-full items-center justify-between bg-white px-4 py-1.5 dark:bg-neutral-700">
-		<h1 class="text-center text-xl">Instagram Tracker</h1>
-		<div class="flex items-center justify-center gap-2">
-			<ThemeButton class="" />
-			<FullscreenButton class="md:hidden" />
+	<Navbar />
+	<div class="relative flex min-h-0 grow flex-col">
+		<div class="absolute right-0 top-0 h-full w-full overflow-hidden">
+			<SettingsDrawer class={`absolute right-0 top-0 z-10 h-full w-full`} />
 		</div>
-	</div>
 
-	<div class="flex items-center justify-center border-b border-neutral-200 dark:border-neutral-600">
-		<UserDisplayMain userProfile={$userDataStore.profile} />
-	</div>
-
-	<!-- Content -->
-	<div class="flex min-h-0 grow items-stretch">
-		<div
-			class="flex flex-col items-center justify-between border-r border-neutral-200 py-2 pr-2 text-base dark:border-neutral-600 max-sm:text-xs sm:py-4"
-		>
-			<!-- Left panel content -->
-			<div class="flex items-start">
-				<TabsVertical tabs={$pageTabs} />
+		<div class={`relative flex min-h-0 grow flex-col transition ${$settingsOpen && 'pointer-events-none blur-sm'}`}>
+			<div class="flex items-center justify-center border-b border-neutral-200 dark:border-neutral-600">
+				<UserDisplayMain userProfile={$userDataStore.profile} />
 			</div>
-			<div class="mt-10 flex flex-col items-center justify-center gap-2">
-				<ImportFollowersButton />
-				<ExportFollowersButton>
-					<div class="flex items-center justify-center gap-2">
-						<IcRoundFileDownload aria-label="Export data" class="size-4 sm:size-6" />
-						<p>Export data</p>
+
+			<!-- Content -->
+			<div class="flex min-h-0 grow items-stretch">
+				<div
+					class="flex flex-col items-center justify-between border-r border-neutral-200 py-2 pr-2 text-base dark:border-neutral-600 max-sm:text-xs sm:py-4"
+				>
+					<!-- Left panel content -->
+					<div class="flex items-start">
+						<TabsVertical tabs={$pageTabs} />
 					</div>
-				</ExportFollowersButton>
-			</div>
-		</div>
+					<div class="mt-8 flex flex-col items-center justify-center gap-2 pb-2 sm:mt-10">
+						<ImportFollowersButton />
+						<ExportFollowersButton>
+							<div class="flex items-center justify-center gap-2">
+								<IcRoundFileDownload aria-label="Export data" class="size-4 sm:size-6" />
+								<p>Export data</p>
+							</div>
+						</ExportFollowersButton>
+					</div>
+				</div>
 
-		<!-- Right side -->
-		<div class="flex min-h-0 grow flex-col items-center justify-center max-sm:max-w-56">
-			{#if $userDataStore.userId}
-				{#if $loadingStateStore.isLoading}
-					<div class="flex flex-col items-center justify-center space-y-4 p-4">
-						<p class="text-center text-sm text-neutral-600 dark:text-neutral-400">Loading user data...</p>
-						<ProgressBar progress={$totalProgressStore} />
+				<!-- Right side -->
+				<div class="flex min-h-0 grow flex-col items-center justify-center">
+					{#if $userDataStore.userId}
+						{#if $loadingStateStore.isLoading}
+							<div class="flex flex-col items-center justify-center space-y-4 p-4">
+								<p class="text-center text-sm text-neutral-600 dark:text-neutral-400">Loading user data...</p>
+								<ProgressBar progress={$totalProgressStore} />
 
-						{#if $loadingStateStore.limitations.followersExceeded || $loadingStateStore.limitations.followingExceeded}
-							<div class="mt-4 rounded-md bg-yellow-50 p-4 dark:bg-yellow-900/20">
-								<p class="text-sm text-yellow-700 dark:text-yellow-200">
-									{#if $loadingStateStore.limitations.followersExceeded && $loadingStateStore.limitations.followingExceeded}
-										This account has too many connections to analyze. We can only analyze accounts with fewer than 2,000
-										followers and following.
-									{:else if $loadingStateStore.limitations.followersExceeded}
-										This account has too many followers to analyze (>2,000). Only following data will be fetched.
-									{:else}
-										This account follows too many users to analyze (>2,000). Only follower data will be fetched.
-									{/if}
+								{#if $loadingStateStore.limitations.followersExceeded || $loadingStateStore.limitations.followingExceeded}
+									<div class="mt-4 rounded-md bg-yellow-50 p-4 dark:bg-yellow-900/20">
+										<p class="text-sm text-yellow-700 dark:text-yellow-200">
+											{#if $loadingStateStore.limitations.followersExceeded && $loadingStateStore.limitations.followingExceeded}
+												This account has too many connections to analyze. We can only analyze accounts with fewer than
+												2,000 followers and following.
+											{:else if $loadingStateStore.limitations.followersExceeded}
+												This account has too many followers to analyze (>2,000). Only following data will be fetched.
+											{:else}
+												This account follows too many users to analyze (>2,000). Only follower data will be fetched.
+											{/if}
+										</p>
+									</div>
+								{/if}
+							</div>
+						{:else if isPrivateAccount($userDataStore)}
+							<div class="flex flex-col items-center justify-center p-8 text-center">
+								<p class="mb-2 text-lg font-medium">Private Account</p>
+								<p class="text-sm text-neutral-600 dark:text-neutral-400">
+									This account is private. You need to follow this account to view their followers and following.
 								</p>
 							</div>
+						{:else if $loadingStateStore.error}
+							<div class="flex flex-col items-center justify-center p-8 text-center">
+								<p class="mb-2 text-lg font-medium text-red-600">Error Loading Data</p>
+								<p class="text-sm text-neutral-600 dark:text-neutral-400">
+									{$loadingStateStore.error}
+								</p>
+							</div>
+						{:else}
+							<UserList users={getUsers($activeTabId, $userDataStore)} />
 						{/if}
-					</div>
-				{:else if isPrivateAccount($userDataStore)}
-					<div class="flex flex-col items-center justify-center p-8 text-center">
-						<p class="mb-2 text-lg font-medium">Private Account</p>
-						<p class="text-sm text-neutral-600 dark:text-neutral-400">
-							This account is private. You need to follow this account to view their followers and following.
-						</p>
-					</div>
-				{:else if $loadingStateStore.error}
-					<div class="flex flex-col items-center justify-center p-8 text-center">
-						<p class="mb-2 text-lg font-medium text-red-600">Error Loading Data</p>
-						<p class="text-sm text-neutral-600 dark:text-neutral-400">
-							{$loadingStateStore.error}
-						</p>
-					</div>
-				{:else}
-					<UserList users={getUsers($activeTabId, $userDataStore)} />
-				{/if}
-			{/if}
+					{/if}
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

@@ -40,7 +40,7 @@
 
 <div class="flex min-h-0 w-full min-w-48 flex-1 flex-col">
 	<!-- Scrollable list -->
-	<div class="max-h-96 flex-1 overflow-y-auto overflow-x-hidden p-2 sm:max-h-none sm:p-4">
+	<div class="custom-scrollbar max-h-none flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-4">
 		{#if displayedUsers && displayedUsers.length > 0}
 			<div class="flex flex-col gap-y-1 sm:gap-y-2">
 				{#each displayedUsers as user}

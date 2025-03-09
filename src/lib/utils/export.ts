@@ -4,8 +4,6 @@ import type { UserData } from "$lib/types/userTypes";
 import YAML from "yaml";
 import { diffProfile, findDifferences } from "./users";
 
-// No longer needed in top-level export since we embed all data in initialState/latestState
-// import type { Profile, Following, Followers }... etc.
 
 export function exportFile(userData: UserData, exportAs: ExportFileTypes = ExportFileTypes.JSON) {
   if (!userData.userId) {
@@ -54,21 +52,18 @@ function downloadBlob(blob: Blob, filename: string) {
  * prepareForExport
  *
  * Instead of putting `profile`, `followers`, and `following` at top level,
- * we embed them in `initialState` / `latestState` with any `records`, and
- * just add `metadata`.
+ * we embed them in `initialState` / `latestState` with any `records`
  */
 function prepareForExport(userData: UserData): ExportData {
   if (!userData.userId) {
     throw new Error("User ID is required for export");
   }
 
-  // We treat the user's current data as the "current state"
   const currentState: UserData = {
     userId: userData.userId,
     profile: userData.profile,
     followers: userData.followers ?? [],
     following: userData.following ?? [],
-    // notFollowingMeBack, iDontFollowBack, currentDiff, etc. can be included or omitted as you wish
   };
 
   // Ensure a history object exists
@@ -80,14 +75,12 @@ function prepareForExport(userData: UserData): ExportData {
     };
   }
 
-  // (A) If there's a `currentDiff`, push it into `records` (avoid duplicates)
   let hasPushedDiff = false;
   if (userData.currentDiff) {
     const lastRecord = userData.history.records.at(-1);
     const newDiffStr = JSON.stringify(userData.currentDiff);
     const lastDiffStr = lastRecord ? JSON.stringify(lastRecord.diff) : null;
 
-    // Only push if it's not identical to the last record's diff
     if (!lastRecord || newDiffStr !== lastDiffStr) {
       userData.history.records.push({
         diff: structuredClone(userData.currentDiff),
@@ -95,12 +88,10 @@ function prepareForExport(userData: UserData): ExportData {
       });
     }
 
-    // Clear it so we don't push again next time
     userData.currentDiff = undefined;
     hasPushedDiff = true;
   }
 
-  // (B) If we did NOT push a currentDiff, check for new diffs vs. latestState
   if (!hasPushedDiff) {
     const latestState = userData.history.latestState ?? currentState;
 
@@ -133,10 +124,8 @@ function prepareForExport(userData: UserData): ExportData {
     }
   }
 
-  // (C) Update latestState to match the current "live" data
   userData.history.latestState = structuredClone(currentState);
 
-  // (D) Return an ExportData object that has initialState, latestState, records, and metadata
   return {
     initialState: userData.history.initialState,
     latestState: userData.history.latestState,

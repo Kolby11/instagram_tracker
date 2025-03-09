@@ -11,5 +11,5 @@
 </script>
 
 <button onclick={fullscreenButtonClick} {...props} title="Open in new tab">
-	<IcRoundFullscreen aria-label="Fullscreen" class="size-6" />
+	<IcRoundFullscreen class="size-6" aria-label="Fullscreen" />
 </button>
