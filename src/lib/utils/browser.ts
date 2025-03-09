@@ -11,8 +11,6 @@ export function getUsernameFromURL(): Promise<string | undefined> {
 			}
 
 			const url = new URL(tab.url);
-			// Example: if URL is https://instagram.com/johndoe/,
-			// pathname is "/johndoe/", so remove `/`
 			const name = url.pathname.replace(/\//g, '');
 			resolve(name);
 		});

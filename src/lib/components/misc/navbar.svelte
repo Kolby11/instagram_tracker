@@ -6,7 +6,7 @@
 
 <div class="w-full">
 	<div class="flex w-full items-center justify-between bg-white px-4 py-1.5 dark:bg-neutral-700">
-		<h1 class="text-center text-xl font-medium">Instagram Tracker</h1>
+		<h1 class="text-center text-xl font-medium">InstaTracker</h1>
 		<div class="flex items-center justify-center gap-2">
 			<ThemeButton class="" />
 			<SettingsButton />

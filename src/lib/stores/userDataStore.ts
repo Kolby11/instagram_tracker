@@ -5,6 +5,7 @@ import { browser } from "$app/environment";
 import { diffProfile, findDifferences, parseIgUserPreviews, parseIgUserProfile } from "$lib/utils/users";
 import { MAX_FETCHABLE_COUNT, MAX_STORED_USERS } from "$lib/data";
 import { fetchFollowers, fetchFollowing, fetchUserProfile } from "$lib/utils/instagramApi";
+import { getIDontFollowBack, getNotFollowingMeBack } from "$lib/utils/followers";
 
 // Initialize stores
 export const userDataStore: Writable<UserData> = writable({});
@@ -256,14 +257,8 @@ if (browser) {
       const currentFollowing = updatedValue.following ?? [];
 
       // Recalculate helper arrays
-      updatedValue.notFollowingMeBack = currentFollowers.filter(
-        (follower) => !currentFollowing.some((f) => f.id === follower.id)
-      );
-
-      updatedValue.iDontFollowBack = currentFollowing.filter(
-        (following) => !currentFollowers.some((f) => f.id === following.id)
-      );
-
+      updatedValue.notFollowingMeBack = getNotFollowingMeBack(currentFollowing, currentFollowers)
+      updatedValue.iDontFollowBack = getIDontFollowBack(currentFollowing, currentFollowers)
 
       // Update currentDiff by comparing top-level data to history.latestState
       if (updatedValue.history?.latestState) {

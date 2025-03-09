@@ -1,11 +1,11 @@
 {
-	"name": "Instagram tracker",
-	"description": "Instagram tracker extension",
+	"name": "InstaTracker",
+	"description": "Extension to track and export Instagram followers",
 	"version": "1.0",
 	"manifest_version": 3,
+	"icons": { "16": "icon16.png", "32": "icon32.png", "48": "icon48.png", "128": "icon128.png" },
 	"action": {
-		"default_popup": "index.html",
-		"default_icon": "instagram_tracker.png"
+		"default_popup": "index.html"
 	},
 	"permissions": ["activeTab", "webRequest", "downloads", "storage"],
 	"host_permissions": ["<all_urls>"],
