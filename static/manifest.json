@@ -7,12 +7,15 @@
 	"action": {
 		"default_popup": "index.html"
 	},
-	"permissions": ["activeTab", "webRequest", "downloads", "storage"],
-	"host_permissions": ["<all_urls>"],
+	"permissions": ["webRequest", "downloads", "storage"],
+	"host_permissions": [
+		"https://www.instagram.com/*",
+		"*://*.instagram.com/*",
+		"https://*.fbcdn.net/*",
+		"https://*.cdninstagram.com/*",
+		"https://*.instagram.com;"
+	],
 	"background": {
 		"service_worker": "background.js"
-	},
-	"content_security_policy": {
-		"extension_pages": "script-src 'self'; img-src * data: blob: https://*.fbcdn.net https://*.cdninstagram.com https://*.instagram.com;"
 	}
 }
