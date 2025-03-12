@@ -5,13 +5,6 @@
 	import { getUserId } from '$lib/utils/instagramApi';
 	import { getUsernameFromURL } from '$lib/utils/browser';
 	import TabsVertical from '$lib/components/misc/tabsVertical.svelte';
-	import {
-		fetchUserData,
-		loadUserDataFromLocalStorage,
-		userDataStore,
-		loadingStateStore,
-		totalProgressStore
-	} from '$lib/stores/userDataStore';
 	import { page } from '$app/state';
 	import ImportFollowersButton from '$lib/components/importDataButton.svelte';
 	import UserList from '$lib/components/userList.svelte';
@@ -26,6 +19,8 @@
 	import SettingsDrawer from '$lib/components/misc/settingsDrawer.svelte';
 	import { appSettings, settingsOpen } from '$lib/stores/appSettingsStore';
 	import { needsDataRefresh } from '$lib/utils/needsDataRefresh';
+	import { getTranslation } from '$lib/utils/i18n';
+	import { fetchUserData, loadingStateStore, loadUserDataFromLocalStorage, totalProgressStore, userDataStore } from '$lib/stores/userDataStore';
 
 	let params = $derived(new URL(page.url).searchParams);
 	let currentUsername = '';
@@ -153,8 +148,8 @@
 						<ImportFollowersButton />
 						<ExportFollowersButton>
 							<div class="flex items-center justify-center gap-2">
-								<IcRoundFileDownload aria-label="Export data" class="size-4 sm:size-6" />
-								<p>Export data</p>
+								<IcRoundFileDownload aria-label={getTranslation('exportData', "Export data")} class="size-4 sm:size-6" />
+								<p>{getTranslation('exportData', 'Export data')}</p>
 							</div>
 						</ExportFollowersButton>
 					</div>
@@ -165,19 +160,18 @@
 					{#if $userDataStore.userId}
 						{#if $loadingStateStore.isLoading}
 							<div class="flex flex-col items-center justify-center space-y-4 p-4">
-								<p class="text-center text-sm text-neutral-600 dark:text-neutral-400">Loading user data...</p>
+								<p class="text-center text-sm text-neutral-600 dark:text-neutral-400">{getTranslation('loadingUserData', "Loading user data")}...</p>
 								<ProgressBar progress={$totalProgressStore} />
 
 								{#if $loadingStateStore.limitations.followersExceeded || $loadingStateStore.limitations.followingExceeded}
 									<div class="mt-4 rounded-md bg-yellow-50 p-4 dark:bg-yellow-900/20">
 										<p class="text-sm text-yellow-700 dark:text-yellow-200">
 											{#if $loadingStateStore.limitations.followersExceeded && $loadingStateStore.limitations.followingExceeded}
-												This account has too many connections to analyze. We can only analyze accounts with fewer than
-												2,000 followers and following.
+											{getTranslation('followersAndFollowingExceeded', "Account followers and following limit exceeded. This limit is set for your account safety, but you can modify it in settings at your own risk.")}}
 											{:else if $loadingStateStore.limitations.followersExceeded}
-												This account has too many followers to analyze (>2,000). Only following data will be fetched.
+											{getTranslation('followersExceeded', "Account followers limit exceeded. This limit is set for your account safety, but you can modify it in settings at your own risk.")}}
 											{:else}
-												This account follows too many users to analyze (>2,000). Only follower data will be fetched.
+											{getTranslation('followingExceeded', "Account following limit exceeded. This limit is set for your account safety, but you can modify it in settings at your own risk.")}
 											{/if}
 										</p>
 									</div>
@@ -185,14 +179,14 @@
 							</div>
 						{:else if isPrivateAccount($userDataStore)}
 							<div class="flex flex-col items-center justify-center p-8 text-center">
-								<p class="mb-2 text-lg font-medium">Private Account</p>
+								<p class="mb-2 text-lg font-medium">{getTranslation('privateAccount', "Private Account")}</p>
 								<p class="text-sm text-neutral-600 dark:text-neutral-400">
-									This account is private. You need to follow this account to view their followers and following.
+									{getTranslation('privateAccountMessage', "This account is private. You need to follow this account to view their followers and following.")}
 								</p>
 							</div>
 						{:else if $loadingStateStore.error}
 							<div class="flex flex-col items-center justify-center p-8 text-center">
-								<p class="mb-2 text-lg font-medium text-red-600">Error Loading Data</p>
+								<p class="mb-2 text-lg font-medium text-red-600">{getTranslation('loadingUserDataError', "Error Loading Data")}</p>
 								<p class="text-sm text-neutral-600 dark:text-neutral-400">
 									{$loadingStateStore.error}
 								</p>

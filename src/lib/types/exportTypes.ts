@@ -1,7 +1,7 @@
 import type { DifferenceRecord, UserData} from "./userTypes";
 
 export type ExportData = {
-  initialState: UserData;
+	initialState: UserData;
 	latestState: UserData;
 	records: DifferenceRecord[];
 	metadata: ExportMetadata;

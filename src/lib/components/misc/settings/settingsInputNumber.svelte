@@ -1,6 +1,6 @@
 <script module lang="ts">
 	export type AppSettingInputNumberProps = {
-		unit: string;
+		unit?: string;
 		min: number;
 		max: number;
 	};
@@ -15,11 +15,11 @@
 </script>
 
 <div
-	class="flex items-center justify-center gap-x-1 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 px-2 py-1 text-neutral-900 outline-1 focus-within:outline dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
+	class="flex items-center justify-center gap-x-1 overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 p-1 text-neutral-900 outline-1 focus-within:outline dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200"
 >
 	<input
 		bind:value={$appSettings[key].value}
-		class="w-5 bg-transparent text-right outline-none"
+		class="w-8 bg-transparent text-right outline-none"
 		type="number"
 		{min}
 		{max}

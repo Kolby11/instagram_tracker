@@ -3,9 +3,9 @@ import type { UserData, UserPreview } from "$lib/types/userTypes";
 import { derived, get, writable, type Writable } from "svelte/store";
 import { browser } from "$app/environment";
 import { diffProfile, findDifferences, parseIgUserPreviews, parseIgUserProfile } from "$lib/utils/users";
-import { MAX_FETCHABLE_COUNT, MAX_STORED_USERS } from "$lib/data";
 import { fetchFollowers, fetchFollowing, fetchUserProfile } from "$lib/utils/instagramApi";
 import { getIDontFollowBack, getNotFollowingMeBack } from "$lib/utils/followers";
+import { appSettings } from "./appSettingsStore";
 
 // Initialize stores
 export const userDataStore: Writable<UserData> = writable({});
@@ -56,8 +56,8 @@ export async function fetchUserData(userId: number): Promise<void> {
     const followingCount = userProfile.following_count;
     
     const limitations = {
-      followersExceeded: followersCount > MAX_FETCHABLE_COUNT,
-      followingExceeded: followingCount > MAX_FETCHABLE_COUNT
+      followersExceeded: followersCount > get(appSettings).maxFetchCount.value,
+      followingExceeded: followingCount > get(appSettings).maxFetchCount.value
     };
 
     // Update limitations in store
@@ -76,7 +76,7 @@ export async function fetchUserData(userId: number): Promise<void> {
     // If both exceed limits, throw error
     if (limitations.followersExceeded && limitations.followingExceeded) {
       throw new Error(
-        `This account has too many connections (${followersCount.toLocaleString()} followers, ${followingCount.toLocaleString()} following). To prevent excessive requests, we can only analyze accounts with fewer than ${MAX_FETCHABLE_COUNT.toLocaleString()} followers and following.`
+        `This account has too many connections (${followersCount.toLocaleString()} followers, ${followingCount.toLocaleString()} following). To prevent excessive requests, we can only analyze accounts with fewer than ${get(appSettings).maxFetchCount.value.toLocaleString()} followers and following.`
       );
     }
 
@@ -137,7 +137,6 @@ export function saveUserDataToLocalStorage(userData: UserData): void {
   const savedUserIdsLocal = localStorage.getItem("savedUserIds");
   const savedUserIds: string[] = savedUserIdsLocal ? JSON.parse(savedUserIdsLocal) : [];
   
-  // Save the current user data
   localStorage.setItem(userData.userId.toString(), JSON.stringify(userData));
   
   // If user already exists in the list, remove it (to move it to front later)
@@ -149,8 +148,8 @@ export function saveUserDataToLocalStorage(userData: UserData): void {
   // Add new userId to the front of the list
   savedUserIds.unshift(userData.userId.toString());
   
-  // If we exceed MAX_STORED_USERS, remove the oldest entry
-  if (savedUserIds.length > MAX_STORED_USERS) {
+  // If we exceed maximum amount of stored users, remove the oldest entry
+  if (savedUserIds.length > get(appSettings).maxStoredUsers.value) {
     const oldestUserId = savedUserIds.pop();
     if (oldestUserId) {
       localStorage.removeItem(oldestUserId);

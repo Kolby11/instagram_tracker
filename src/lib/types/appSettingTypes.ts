@@ -1,4 +1,4 @@
-import type { AppSettingInputCheckboxProps } from "$lib/components/misc/settings/settingsInputCheckbox.svelte";
+import type { AppSettingInputCheckboxProps } from '$lib/components/misc/settings/settingsInputCheckbox.svelte';
 import type { AppSettingInputNumberProps } from "$lib/components/misc/settings/settingsInputNumber.svelte";
 
 export type AppSettingDataTypes = boolean | number | string;
@@ -27,4 +27,6 @@ export type AppSetting<T extends AppSettingDataTypes, I extends AppSettingInputT
 export type AppSettings = Record<string, AppSetting<AppSettingDataTypes, AppSettingInputTypes>> & {
   automaticDataRefresh: AppSetting<boolean, AppSettingInputTypes.CHECKBOX>;
   refreshInterval: AppSetting<number, AppSettingInputTypes.NUMBER>;
+  maxStoredUsers: AppSetting<number, AppSettingInputTypes.NUMBER>;
+  maxFetchCount: AppSetting<number, AppSettingInputTypes.NUMBER>;
 }

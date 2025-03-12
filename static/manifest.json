@@ -1,19 +1,21 @@
 {
+	"default_locale": "en",
 	"name": "InstaTracker",
-	"description": "Extension to track and export Instagram followers",
+	"description": "__MSG_extDescription__",
+	"short_name": "InstaTracker",
+	"author": "Kolby11",
 	"version": "1.0",
 	"manifest_version": 3,
 	"icons": { "16": "icon16.png", "32": "icon32.png", "48": "icon48.png", "128": "icon128.png" },
 	"action": {
 		"default_popup": "index.html"
 	},
-	"permissions": ["webRequest", "downloads", "storage"],
+	"permissions": ["storage"],
 	"host_permissions": [
 		"https://www.instagram.com/*",
 		"*://*.instagram.com/*",
 		"https://*.fbcdn.net/*",
-		"https://*.cdninstagram.com/*",
-		"https://*.instagram.com;"
+		"https://*.cdninstagram.com/*"
 	],
 	"background": {
 		"service_worker": "background.js"

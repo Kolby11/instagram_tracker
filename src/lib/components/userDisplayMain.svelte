@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { UserProfile } from '$lib/types/userTypes';
+	import { getTranslation } from '$lib/utils/i18n';
 	import IcBaselineVerified from '~icons/ic/baseline-verified';
 
 	let { userProfile }: { userProfile: UserProfile | undefined } = $props();
@@ -51,11 +52,11 @@
 			</div>
 			<p class="text-gray-600 dark:text-neutral-200" title="Username">@{userProfile.username}</p>
 			<div class="mt-2 flex gap-4 text-gray-700 dark:text-neutral-100">
-				<p><strong>{userProfile.followerCount}</strong> Followers</p>
-				<p><strong>{userProfile.followingCount}</strong> Following</p>
+				<p><strong>{userProfile.followerCount}</strong> {getTranslation('followers', 'Followers')}</p>
+				<p><strong>{userProfile.followingCount}</strong> {getTranslation('following', 'Following')}</p>
 			</div>
 		</div>
 	{:else}
-		<p class="animate-pulse text-lg">Loading...</p>
+		<p class="animate-pulse text-lg">{getTranslation('loading', 'Loading')}...</p>
 	{/if}
 </div>

@@ -5,6 +5,7 @@
 	import { importFile } from '$lib/utils/import';
 	import IcRoundFileUpload from '~icons/ic/round-file-upload';
 	import { importDataIntoUserStore, userDataStore } from '$lib/stores/userDataStore';
+	import { getTranslation } from '$lib/utils/i18n';
 
 	type ButtonProps = HTMLButtonAttributes;
 
@@ -58,8 +59,8 @@
 	class="border-2 border-dashed border-gray-600 bg-transparent text-gray-600 hover:border-gray-700 hover:bg-transparent hover:text-gray-700 dark:border-neutral-300 dark:text-neutral-200 dark:hover:border-neutral-400"
 >
 	<div class="flex items-center justify-center gap-2">
-		<IcRoundFileUpload aria-label="Import data" class="size-4 text-gray-600 dark:text-neutral-200 sm:size-6" />
-		<p>Import data</p>
+		<IcRoundFileUpload aria-label={getTranslation('importData', 'Import data')} class="size-4 text-gray-600 dark:text-neutral-200 sm:size-6" />
+		<p>{getTranslation('importData', 'Import data')}</p>
 	</div>
 
 	<input type="file" accept=".json,.yml,.yaml" style="display: none" bind:this={inputRef} onchange={handleFileChange} />

@@ -1,0 +1,128 @@
+{
+	"extDescription": {
+		"message": "Track and export Instagram followers"
+	},
+	"close": {
+		"message": "Close"
+	},
+	"loading":{
+		"message": "Loading"
+	},
+	"loadingUserData":{
+		"message": "Loading user data"
+	},
+	"loadingUserDataError":{
+		"message": "Error loading data"
+	},
+	"followersExceeded": {
+		"message": "Account followers limit exceeded. This limit is set for your account safety, but you can modify it in settings at your own risk."
+	},
+	"followingExceeded": {
+		"message": "Account following limit exceeded. This limit is set for your account safety, but you can modify it in settings at your own risk."
+	},
+	"followersAndFollowingExceeded": {
+		"message": "Account followers and following limit exceeded. This limit is set for your account safety, but you can modify it in settings at your own risk."
+	},
+	"toggleTheme":{
+		"message": "Toggle theme"
+	},
+	"systemTheme":{
+		"message": "System theme"
+	},
+	"darkTheme":{
+		"message": "Dark theme"
+	},
+	"lightTheme":{
+		"message": "Light theme"
+	},
+	"fullscreenButtonTitle": {
+		"message": "Open in new tab"
+	},
+	"fullscreenButtonImageLabel": {
+		"message": "Fullscreen"
+	},
+	"settings": {
+		"message": "Settings"
+	},
+	"closeSettings": {
+		"message": "Close settings"
+	},
+	"followers":{
+		"message": "Followers"
+	},
+	"following":{
+		"message": "Following"
+	},
+	"tabFollowers": {
+		"message": "Followers"
+	},
+	"tabFollowing": {
+		"message": "Following"
+	},
+	"tabNotFollowingMeBack": {
+		"message": "Not Following Me Back"
+	},
+	"tabIDontFollowBack": {
+		"message": "I Don't Follow Back"
+	},
+	"tabUnfollowers": {
+		"message": "Unfollowers"
+	},
+	"tabNewFollowers": {
+		"message": "New Followers"
+	},
+	"tabIUnfollowed": {
+		"message": "I Unfollowed"
+	},
+	"tabNewFollowing": {
+		"message": "New Following"
+	},
+	"privateAccount":{
+		"message": "Private account"
+	},
+	"privateAccountMessage":{
+		"message": "This account is private. You need to follow this account to view their followers and following."
+	},
+	"page":{
+		"message": "Page"
+	},
+	"outOf":{
+		"message": "out of"
+	},
+	"importData": {
+		"message": "Import data"
+	},
+	"exportData": {
+		"message": "Export data"
+	},
+	"noUsersToDisplay":{
+		"message": "No users to display"
+	},
+	"automaticDataRefreshTitle" :{
+		"message": "Automatic Data Refresh"
+	},
+	"automaticDataRefreshTooltip" :{
+		"message": "Automatically refresh data on app load after the specified interval"
+	},
+	"refreshIntervalTitle" :{
+		"message": "Refresh Interval"
+	},
+	"refreshIntervalTootlip" :{
+		"message": "Days between automatic data refreshes"
+	},
+	"refreshIntervalUnit" :{
+		"message": "days"
+	},
+	"maxStoredUsersTitle" :{
+		"message": "Max stored users"
+	},
+	"maxStoredUsersTootlip" :{
+		"message": "Maximum amount of stored users. When limit is reached the oldest saved user gets overwritten"
+	},
+	"maxFetchCountTitle" :{
+		"message": "Max fetch count"
+	},
+	"maxFetchCountTootlip" :{
+		"message": "Maximum amount of followers or following that can be fetched. This limit is set for your account safety, but you can modify it in settings at your own risk."
+	}
+}

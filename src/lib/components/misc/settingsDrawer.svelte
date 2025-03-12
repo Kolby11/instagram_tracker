@@ -6,6 +6,7 @@
 	import SettingsInputCheckbox from './settings/settingsInputCheckbox.svelte';
 	import SettingsInputNumber from './settings/settingsInputNumber.svelte';
 	import { AppSettingInputTypes, type AppSettings } from '$lib/types/appSettingTypes';
+	import { getTranslation } from '$lib/utils/i18n';
 
 	const props: HTMLAttributes<HTMLDivElement> = $props();
 	let component = $state<HTMLDivElement | null>(null);
@@ -44,9 +45,13 @@
 >
 	<div>
 		<div class="flex justify-between px-2">
-			<h3 class="text-lg font-medium">Settings</h3>
-			<button disabled={!$settingsOpen} onclick={() => ($settingsOpen = false)}>
-				<IcRoundClose class="size-6" aria-label="Close settings" />
+			<h3 class="text-lg font-medium">{getTranslation('settings', 'Settings')}</h3>
+			<button
+				disabled={!$settingsOpen}
+				onclick={() => ($settingsOpen = false)}
+				title={getTranslation('closeSettings', 'Close settings')}
+			>
+				<IcRoundClose class="size-6" aria-label={getTranslation('close', 'Close')} />
 			</button>
 		</div>
 		<div class="mt-2">

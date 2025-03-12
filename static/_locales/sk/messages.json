@@ -1,0 +1,128 @@
+{
+	"extDescription": {
+		"message": "Zaznamenaj a exportuj instagram followerov"
+	},
+	"close": {
+		"message": "Zavrieť"
+	},
+	"loading": {
+		"message": "Načítavanie"
+	},
+	"loadingUserData": {
+		"message": "Načítavanie používateľských dát"
+	},
+	"loadingUserDataError": {
+		"message": "Chyba pri načítavaní používateľských dát"
+	},
+	"followersExceeded": {
+		"message": "Prekročený limit sledovateľov účtu. Tento limit je nastavený pre bezpečnosť vášho účtu, ale môžete ho upraviť v nastaveniach na vlastné riziko."
+	},
+	"followingExceeded": {
+		"message": "Prekročený limit sledovaných účtov. Tento limit je nastavený pre bezpečnosť vášho účtu, ale môžete ho upraviť v nastaveniach na vlastné riziko."
+	},
+	"followersAndFollowingExceeded": {
+		"message": "Prekročený limit sledovateľov a sledovaných účtov. Tento limit je nastavený pre bezpečnosť vášho účtu, ale môžete ho upraviť v nastaveniach na vlastné riziko."
+	},
+	"toggleTheme": {
+		"message": "Prepnúť tému"
+	},
+	"systemTheme":{
+		"message": "Systémová téma"
+	},
+	"darkTheme": {
+		"message": "Tmavá téma"
+	},
+	"lightTheme": {
+		"message": "Sveltá téma"
+	},
+	"fullscreenButtonTitle": {
+		"message": "Otvoriť na novej karte"
+	},
+	"fullscreenButtonImageLabel": {
+		"message": "Na celú obrazovku"
+	},
+	"settings": {
+		"message": "Nastavenia"
+	},
+	"closeSettings": {
+		"message": "Zavrieť nastavenia"
+	},
+	"followers":{
+		"message": "Sledovatelia"
+	},
+	"following":{
+		"message": "Sledovaní"
+	},
+	"tabFollowers": {
+		"message": "Sledovatelia"
+	},
+	"tabFollowing": {
+		"message": "Sledovaní"
+	},
+	"tabNotFollowingMeBack": {
+		"message": "Nesledujú ma späť"
+	},
+	"tabIDontFollowBack": {
+		"message": "Ja nesledujem späť"
+	},
+	"tabUnfollowers": {
+		"message": "Prestali ma sledovať"
+	},
+	"tabNewFollowers": {
+		"message": "Noví sledovatelia"
+	},
+	"tabIUnfollowed": {
+		"message": "Ja som prestal sledovať"
+	},
+	"tabNewFollowing": {
+		"message": "Noví sledovaní"
+	},
+	"privateAccount":{
+		"message": "Súkromný profil"
+	},
+	"privateAccountMessage":{
+		"message": "Tento profil je súkromný. Pre zobrazenie dát o používateľovi potrebujete požívateľa sledovať."
+	},
+	"page":{
+		"message": "Strana"
+	},
+	"outOf":{
+		"message": "z"
+	},
+	"importData": {
+		"message": "Importovať dáta"
+	},
+	"exportData": {
+		"message": "Exportovať dáta"
+	},
+	"noUsersToDisplay": {
+		"message": "Žiadny používalia na zobrazenie"
+	},
+	"automaticDataRefreshTitle": {
+		"message": "Automatická obnova dát"
+	},
+	"automaticDataRefreshTooltip": {
+		"message": "Automatická obnova dát pri načítaní aplikácie po určenom intervale"
+	},
+	"refreshIntervalTitle": {
+		"message": "Obnovovací interval"
+	},
+	"refreshIntervalTootlip": {
+		"message": "Dni medzi automatickou obnovou dát"
+	},
+	"refreshIntervalUnit": {
+		"message": "dni"
+	},
+	"maxStoredUsersTitle" :{
+		"message": "Maximum uložených používateľov"
+	},
+	"maxStoredUsersTootlip" :{
+		"message": "Maximálny pocět uložených používateľov. Ak je dosiahnutý limit tak sa najstarší uložený používateľ vymaže"
+	},
+	"maxFetchCountTitle" :{
+		"message": "Maximum načítania používateľov"
+	},
+	"maxFetchCountTootlip" :{
+		"message": "Maximálny počet sledovateľov alebo sledovaných, ktorí môžu byť načítaní. Tento limit je nastavený pre bezpečnosť vášho účtu, ale môžete ho upraviť v nastaveniach na vlastné riziko."
+	}
+}
